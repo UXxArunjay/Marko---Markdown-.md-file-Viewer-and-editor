@@ -1364,3 +1364,102 @@ mark.search-highlight.is-current-match {
     grid-template-columns: 1fr;
   }
 }
+
+/* ================= Default App Banner ================= */
+.default-app-banner {
+  background: linear-gradient(90deg, rgba(31, 111, 235, 0.18), rgba(137, 87, 229, 0.15));
+  border-bottom: 1px solid rgba(56, 139, 253, 0.35);
+  padding: 8px 16px;
+  animation: slideDownBanner 0.25s ease-out;
+  position: relative;
+  z-index: 85;
+}
+
+@keyframes slideDownBanner {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.banner-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.banner-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+
+.banner-badge-icon {
+  color: #58a6ff;
+  display: flex;
+  align-items: center;
+}
+
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-banner-primary {
+  background: var(--accent-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 5px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-banner-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-banner-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-banner-secondary:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.btn-banner-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 6px;
+}
+
+.btn-banner-link:hover {
+  color: var(--text-secondary);
+}
+

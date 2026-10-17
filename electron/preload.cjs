@@ -5,5 +5,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onOpenFile: (callback) => {
     ipcRenderer.on('open-file', (_event, data) => callback(data));
   },
-  saveFile: (filePath, content) => ipcRenderer.invoke('save-file', { filePath, content })
+  saveFile: (filePath, content) => ipcRenderer.invoke('save-file', { filePath, content }),
+  checkDefaultApp: () => ipcRenderer.invoke('check-default-app'),
+  setDefaultApp: () => ipcRenderer.invoke('set-default-app')
 });

@@ -89,7 +89,14 @@ class AppController {
       // Overlay & Toasts
       dropzoneOverlay: document.getElementById('dropzoneOverlay'),
       toastContainer: document.getElementById('toastContainer'),
-      btnPwaInstall: document.getElementById('btnPwaInstall')
+      btnPwaInstall: document.getElementById('btnPwaInstall'),
+
+      // Default App Banner & Buttons
+      defaultAppBanner: document.getElementById('defaultAppBanner'),
+      btnSetAsDefault: document.getElementById('btnSetAsDefault'),
+      btnDismissDefaultBanner: document.getElementById('btnDismissDefaultBanner'),
+      btnNeverAskDefault: document.getElementById('btnNeverAskDefault'),
+      btnModalSetDefault: document.getElementById('btnModalSetDefault')
     };
 
     // Subsystems
@@ -151,6 +158,9 @@ class AppController {
           this.showToast(`Opened "${fileData.fileName}"`, 'success');
         }
       });
+
+      // 3. Check if Marko is default Markdown viewer
+      this.checkDefaultAppStatus();
     }
   }
 
@@ -472,6 +482,26 @@ class AppController {
       this.dom.shortcutsModal.classList.remove('is-active');
     });
 
+    // Default App Banner & Setting Buttons
+    if (this.dom.btnSetAsDefault) {
+      this.dom.btnSetAsDefault.addEventListener('click', () => this.triggerSetDefaultApp());
+    }
+    if (this.dom.btnModalSetDefault) {
+      this.dom.btnModalSetDefault.addEventListener('click', () => this.triggerSetDefaultApp());
+    }
+    if (this.dom.btnDismissDefaultBanner) {
+      this.dom.btnDismissDefaultBanner.addEventListener('click', () => {
+        if (this.dom.defaultAppBanner) this.dom.defaultAppBanner.style.display = 'none';
+      });
+    }
+    if (this.dom.btnNeverAskDefault) {
+      this.dom.btnNeverAskDefault.addEventListener('click', () => {
+        localStorage.setItem('marko_never_ask_default', 'true');
+        if (this.dom.defaultAppBanner) this.dom.defaultAppBanner.style.display = 'none';
+        this.showToast('Default app prompt silenced. Re-enable anytime in Shortcuts & Help.', 'info');
+      });
+    }
+
     // Template Cards Selection
     document.querySelectorAll('.template-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -630,6 +660,62 @@ class AppController {
         this.deferredPrompt = null;
       }
     });
+  }
+
+  async checkDefaultAppStatus() {
+    if (!window.electronAPI || !window.electronAPI.checkDefaultApp) {
+      return;
+    }
+
+    try {
+      const res = await window.electronAPI.checkDefaultApp();
+      if (!res || !res.isWindows) return;
+
+      const neverAsk = localStorage.getItem('marko_never_ask_default') === 'true';
+
+      if (this.dom.btnModalSetDefault) {
+        if (res.isDefault) {
+          this.dom.btnModalSetDefault.textContent = '✓ Default Viewer';
+          this.dom.btnModalSetDefault.disabled = true;
+          this.dom.btnModalSetDefault.style.opacity = '0.7';
+        } else {
+          this.dom.btnModalSetDefault.textContent = 'Set as Default';
+          this.dom.btnModalSetDefault.disabled = false;
+          this.dom.btnModalSetDefault.style.opacity = '1';
+        }
+      }
+
+      if (this.dom.defaultAppBanner) {
+        if (!res.isDefault && !neverAsk) {
+          this.dom.defaultAppBanner.style.display = 'block';
+        } else {
+          this.dom.defaultAppBanner.style.display = 'none';
+        }
+      }
+    } catch (err) {
+      console.error('[Marko] Error checking default app status:', err);
+    }
+  }
+
+  async triggerSetDefaultApp() {
+    if (!window.electronAPI || !window.electronAPI.setDefaultApp) {
+      this.showToast('Please set default app in Windows Settings', 'info');
+      return;
+    }
+
+    try {
+      this.showToast('Opening Windows Default Apps dialog...', 'info');
+      await window.electronAPI.setDefaultApp();
+
+      if (this.dom.defaultAppBanner) {
+        this.dom.defaultAppBanner.style.display = 'none';
+      }
+
+      setTimeout(() => this.checkDefaultAppStatus(), 2500);
+    } catch (err) {
+      console.error('[Marko] Failed to trigger set default app:', err);
+      this.showToast('Could not open default app dialog', 'error');
+    }
   }
 
   showToast(message, type = 'info') {

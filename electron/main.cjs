@@ -1,6 +1,11 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const {
+  registerFileAssociations,
+  isDefaultMarkdownViewer,
+  promptSetDefault
+} = require('./windows-assoc.cjs');
 
 let mainWindow = null;
 let pendingFile = null;
@@ -64,7 +69,14 @@ if (!gotTheLock) {
     }
   });
 
-  app.whenReady().then(createWindow);
+  app.whenReady().then(() => {
+    try {
+      registerFileAssociations();
+    } catch (err) {
+      console.error('[Marko] Failed to register associations on startup:', err);
+    }
+    createWindow();
+  });
 }
 
 function createWindow() {
@@ -138,6 +150,29 @@ ipcMain.handle('save-file', async (_event, { filePath, content }) => {
     return { success: true };
   } catch (err) {
     console.error('Failed to save file:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Default App Handlers
+ipcMain.handle('check-default-app', () => {
+  try {
+    return {
+      isDefault: isDefaultMarkdownViewer(),
+      isWindows: process.platform === 'win32'
+    };
+  } catch (err) {
+    console.error('[Marko] Error checking default app:', err);
+    return { isDefault: false, isWindows: process.platform === 'win32' };
+  }
+});
+
+ipcMain.handle('set-default-app', () => {
+  try {
+    const success = promptSetDefault();
+    return { success };
+  } catch (err) {
+    console.error('[Marko] Error setting default app:', err);
     return { success: false, error: err.message };
   }
 });
