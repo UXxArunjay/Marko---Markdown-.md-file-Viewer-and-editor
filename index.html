@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Marko — Universal Markdown (.md) Viewer & Editor</title>
+    <meta name="description" content="Cross-platform Markdown Viewer and Editor for macOS, Windows, Linux, Android, and iOS." />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="mode-view">
+    <div id="app">
+      <!-- ================= Top Navigation Bar ================= -->
+      <header class="app-header">
+        <div class="header-left">
+          <button id="btnSidebarToggle" class="btn-icon-only" title="Toggle Table of Contents (Ctrl+B)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+
+          <div class="brand-badge">
+            <img src="/icon-48.png" width="22" height="22" alt="Marko" style="border-radius: 6px; display: inline-block; object-fit: contain; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" />
+            <span>Marko</span>
+          </div>
+
+          <div id="currentFilePill" class="current-file-pill" title="Click to rename document">
+            <svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span id="currentFileName">README.md</span>
+            <span id="dirtyIndicator" class="dirty-indicator" style="display: none;" title="Unsaved changes"></span>
+          </div>
+        </div>
+
+        <!-- Center Mode Switcher: View (Default) / Edit / Split -->
+        <div class="header-center">
+          <div class="mode-segmented-control" role="tablist">
+            <button id="btnModeView" class="mode-btn is-active" title="Reading & Preview Mode (Default)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>View</span>
+              <span class="badge-default">Default</span>
+            </button>
+            <button id="btnModeEdit" class="mode-btn" title="Edit Markdown Source (Ctrl+E)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              <span>Edit</span>
+            </button>
+            <button id="btnModeSplit" class="mode-btn" title="Side-by-side Editor & Live Preview">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="3" x2="12" y2="21"></line></svg>
+              <span>Split</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Action Controls -->
+        <div class="header-right">
+          <button id="btnNewFile" class="btn-action" title="Create New Document (Ctrl+N)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <span>New</span>
+          </button>
+
+          <button id="btnOpenFile" class="btn-action" title="Open .md File from disk (Ctrl+O)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>Open</span>
+          </button>
+
+          <button id="btnSaveFile" class="btn-action btn-primary" title="Save Document (Ctrl+S)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span>Save</span>
+          </button>
+
+          <!-- Export Dropdown -->
+          <div class="dropdown-container" id="exportDropdownContainer">
+            <button id="btnExportDropdown" class="btn-action" title="Export & Share">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+              <span>Export</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" id="btnExportPdf">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Export to PDF (Print)</span>
+              </button>
+              <button class="dropdown-item" id="btnExportHtml">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                <span>Export as HTML</span>
+              </button>
+              <button class="dropdown-item" id="btnExportMarkdown">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Export as Markdown (.md)</span>
+              </button>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item" id="btnCopyHtml">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy Rendered HTML</span>
+              </button>
+              <button class="dropdown-item" id="btnCopyMarkdown">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span>Copy Raw Markdown</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Search Button -->
+          <button id="btnSearchToggle" class="btn-icon-only" title="Find in document (Ctrl+F)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </button>
+
+          <!-- Theme Dropdown -->
+          <div class="dropdown-container" id="themeDropdownContainer">
+            <button id="btnThemeDropdown" class="btn-icon-only" title="Switch Theme (Dark, Light, Sepia)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            </button>
+            <div class="dropdown-menu">
+              <button class="dropdown-item" data-set-theme="dark">
+                <span>🌙 Dark (Default)</span>
+              </button>
+              <button class="dropdown-item" data-set-theme="light">
+                <span>☀️ Light Mode</span>
+              </button>
+              <button class="dropdown-item" data-set-theme="sepia">
+                <span>📜 Sepia Reader</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Shortcuts & About Button -->
+          <button id="btnShortcutsToggle" class="btn-icon-only" title="Keyboard Shortcuts & Platforms Guide">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </button>
+
+          <!-- PWA Install Button (hidden until prompt available) -->
+          <button id="btnPwaInstall" class="btn-action" style="display: none;" title="Install Desktop App">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>Install App</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- ================= Workspace Area ================= -->
+      <main class="app-workspace">
+        <!-- Sidebar: Outline (TOC) & Recents -->
+        <aside id="appSidebar" class="app-sidebar">
+          <div class="sidebar-section">
+            <div class="sidebar-header">
+              <span>Table of Contents</span>
+            </div>
+            <div class="sidebar-content-scroll" id="outlineContainer">
+              <!-- Dynamically populated outline -->
+            </div>
+          </div>
+
+          <div class="sidebar-section" style="max-height: 200px;">
+            <div class="sidebar-header">
+              <span>Recent Documents</span>
+            </div>
+            <div class="sidebar-content-scroll" id="recentFilesContainer">
+              <!-- Dynamically populated recents -->
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <div class="stats-grid">
+              <div class="stat-chip">
+                <span class="stat-value" id="statWords">0</span>
+                <span class="stat-label">Words</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-value" id="statReadingTime">1m</span>
+                <span class="stat-label">Read Time</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-value" id="statCharacters">0</span>
+                <span class="stat-label">Characters</span>
+              </div>
+              <div class="stat-chip">
+                <span class="stat-value" id="statLines">0</span>
+                <span class="stat-label">Lines</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Document Panel -->
+        <section class="document-panel">
+          <!-- Slide-down Search Bar -->
+          <div id="searchBarContainer" class="search-bar-container">
+            <div class="search-input-wrapper">
+              <svg class="search-icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="searchInput" class="search-input" placeholder="Search in document..." />
+            </div>
+            <span id="searchMatchCount" class="search-meta">0 of 0</span>
+            <button id="btnSearchPrev" class="btn-icon-only" title="Previous match (Shift+Enter)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+            </button>
+            <button id="btnSearchNext" class="btn-icon-only" title="Next match (Enter)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </button>
+            <button id="btnSearchClose" class="btn-icon-only" title="Close search (Esc)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+
+          <!-- Panes Wrapper (Viewer Container & Editor Container) -->
+          <div class="panes-wrapper">
+            <!-- Editor Container (Shown in Edit / Split Mode) -->
+            <div id="editorContainer" class="editor-container">
+              <div class="editor-toolbar">
+                <button class="toolbar-btn" id="tbHeading" title="Heading 2 (##)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="12" y1="4" x2="12" y2="20"></line></svg></button>
+                <button class="toolbar-btn" id="tbBold" title="Bold (**)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path></svg></button>
+                <button class="toolbar-btn" id="tbItalic" title="Italic (*)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg></button>
+                <button class="toolbar-btn" id="tbStrikethrough" title="Strikethrough (~~)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 4H9a3 3 0 0 0-2.83 4"></path><path d="M14 12a4 4 0 0 1 0 8H6"></path><line x1="4" y1="12" x2="20" y2="12"></line></svg></button>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn" id="tbBulletList" title="Bullet List (- )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+                <button class="toolbar-btn" id="tbOrderedList" title="Numbered List (1. )"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg></button>
+                <button class="toolbar-btn" id="tbTaskList" title="Task Checklist (- [ ])"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></button>
+                <button class="toolbar-btn" id="tbQuote" title="Blockquote (>)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></button>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn" id="tbCodeInline" title="Inline Code (`)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg></button>
+                <button class="toolbar-btn" id="tbCodeBlock" title="Code Block (```)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><polyline points="8 10 12 14 8 18"></polyline><line x1="13" y1="18" x2="16" y2="18"></line></svg></button>
+                <button class="toolbar-btn" id="tbTable" title="Insert Table"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="12" y1="3" x2="12" y2="21"></line></svg></button>
+                <button class="toolbar-btn" id="tbLink" title="Link [text](url)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></button>
+                <button class="toolbar-btn" id="tbImage" title="Image ![alt](url)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></button>
+                <div class="toolbar-divider"></div>
+                <button class="toolbar-btn" id="tbMath" title="Insert KaTeX Math Formula ($$)"><span style="font-size:12px; font-weight:700;">∑x</span></button>
+                <button class="toolbar-btn" id="tbMermaid" title="Insert Mermaid Diagram"><span style="font-size:11px; font-weight:700; color:var(--accent-hover);">Merm</span></button>
+                <button class="toolbar-btn" id="tbHr" title="Horizontal Rule (---)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+              </div>
+
+              <div class="editor-textarea-wrapper">
+                <textarea
+                  id="editorTextarea"
+                  class="editor-textarea"
+                  placeholder="Type or paste your Markdown here..."
+                  spellcheck="true"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Viewer Container (Default Reading Experience) -->
+            <div id="viewerContainer" class="viewer-container">
+              <article id="viewerProse" class="viewer-prose">
+                <!-- Rendered Markdown goes here -->
+              </article>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ================= Template Chooser Modal ================= -->
+      <div id="newFileModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 class="modal-title">Create New Markdown Document</h3>
+            <button id="btnCloseNewModal" class="btn-icon-only">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="template-cards-grid">
+              <div class="template-card" data-template="blank">
+                <div class="template-icon">📄</div>
+                <div class="template-title">Blank Document</div>
+                <div class="template-desc">Start fresh with a clean untitled markdown page.</div>
+              </div>
+              <div class="template-card" data-template="welcome">
+                <div class="template-icon">🚀</div>
+                <div class="template-title">Feature Guide & README</div>
+                <div class="template-desc">Comprehensive showcase of tables, alerts, math, & diagrams.</div>
+              </div>
+              <div class="template-card" data-template="techDoc">
+                <div class="template-icon">🏗️</div>
+                <div class="template-title">Technical Specification</div>
+                <div class="template-desc">Architecture layout with Mermaid diagrams and code sections.</div>
+              </div>
+              <div class="template-card" data-template="meetingNotes">
+                <div class="template-icon">📝</div>
+                <div class="template-title">Meeting Notes & Roadmap</div>
+                <div class="template-desc">Action checklists, sprint goals, and structured agenda.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Shortcuts & About Modal ================= -->
+      <div id="shortcutsModal" class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <h3 class="modal-title">Keyboard Shortcuts & Platforms</h3>
+            <button id="btnCloseShortcutsModal" class="btn-icon-only">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          <div class="modal-body" style="font-size: 13.5px; line-height: 1.6;">
+            <p style="margin-bottom: 12px; color: var(--text-secondary);">
+              <strong>MD File View</strong> runs seamlessly across <strong>macOS, Windows, and Linux</strong>. The codebase is configured with <strong>Capacitor</strong> for 1-click mobile builds on <strong>Android & iOS</strong>.
+            </p>
+            <table class="markdown-table" style="margin-bottom: 16px;">
+              <thead>
+                <tr><th>Shortcut</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>Ctrl / Cmd + O</code></td><td>Open .md File from disk</td></tr>
+                <tr><td><code>Ctrl / Cmd + S</code></td><td>Save Document to disk</td></tr>
+                <tr><td><code>Ctrl / Cmd + N</code></td><td>Create New Document</td></tr>
+                <tr><td><code>Ctrl / Cmd + E</code></td><td>Toggle View Mode ↔ Edit Mode</td></tr>
+                <tr><td><code>Ctrl / Cmd + F</code></td><td>Find / Search in document</td></tr>
+                <tr><td><code>Ctrl / Cmd + B</code></td><td>Toggle Table of Contents sidebar</td></tr>
+                <tr><td><code>Ctrl / Cmd + P</code></td><td>Export to PDF (Print)</td></tr>
+                <tr><td><code>Tab / Shift+Tab</code></td><td>Indent / Outdent in Editor</td></tr>
+              </tbody>
+            </table>
+            <div style="background: var(--bg-tertiary); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <strong>📱 Android & iOS Build:</strong><br />
+              Run <code>npm run build</code>, then <code>npx cap add android</code> or <code>npx cap add ios</code> to create native mobile studio projects!
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Drag & Drop File Overlay ================= -->
+      <div id="dropzoneOverlay" class="dropzone-overlay">
+        <div class="dropzone-content">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom: 12px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          <p>Drop your .md file here to open</p>
+        </div>
+      </div>
+
+      <!-- Toast Alerts Container -->
+      <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <!-- Main Logic Script -->
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

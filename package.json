@@ -1,0 +1,102 @@
+{
+  "name": "marko-markdown-editor",
+  "version": "1.1.0",
+  "description": "Marko — High-performance cross-platform Markdown (.md) Viewer & Editor",
+  "author": "Arunjay Patel",
+  "homepage": "https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor.git"
+  },
+  "private": true,
+  "type": "module",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:start": "electron . --dev",
+    "electron:preview": "electron .",
+    "dist:win": "vite build && electron-builder --win nsis",
+    "cap:sync": "cap sync",
+    "cap:add:android": "cap add android",
+    "cap:add:ios": "cap add ios",
+    "cap:open:android": "cap open android",
+    "cap:open:ios": "cap open ios"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3",
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "dompurify": "^3.4.16",
+    "highlight.js": "^11.12.0",
+    "katex": "^0.19.0",
+    "marked": "^18.1.0",
+    "mermaid": "^12.1.0"
+  },
+  "build": {
+    "appId": "com.marko.editor",
+    "productName": "Marko",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "fileAssociations": [
+      {
+        "ext": "md",
+        "name": "Markdown Document",
+        "description": "Markdown File",
+        "role": "Viewer",
+        "mimeType": "text/markdown"
+      },
+      {
+        "ext": "markdown",
+        "name": "Markdown Document",
+        "description": "Markdown File",
+        "role": "Viewer",
+        "mimeType": "text/markdown"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "fileAssociations": [
+        {
+          "ext": "md",
+          "name": "Markdown Document",
+          "description": "Markdown File",
+          "role": "Viewer"
+        },
+        {
+          "ext": "markdown",
+          "name": "Markdown Document",
+          "description": "Markdown File",
+          "role": "Viewer"
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Marko",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    }
+  }
+}

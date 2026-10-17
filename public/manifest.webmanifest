@@ -1,0 +1,27 @@
+{
+  "name": "Marko - Markdown (.md) Viewer & Editor",
+  "short_name": "Marko",
+  "description": "Cross-platform Markdown viewer and editor for Mac, Windows, Linux, Android, and iOS.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#161b22",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48 72x72 96x96 144x144 192x192 256x256",
+      "type": "image/x-icon"
+    }
+  ]
+}
