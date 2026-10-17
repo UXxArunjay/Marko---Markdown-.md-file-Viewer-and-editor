@@ -231,13 +231,23 @@ Marko/
 
 ---
 
-## 📄 License
+## 🤝 Community & Contributing
 
-This project is licensed under the [MIT License](./LICENSE).
+We welcome contributions from everyone! To keep our community healthy and welcoming, please review our public repository guidelines:
+
+- **[Contributing Guide](./CONTRIBUTING.md)**: Workflow, issue creation, branching, testing, and PR guidelines.
+- **[Code of Conduct](./CODE_OF_CONDUCT.md)**: Community standards and enforcement based on Contributor Covenant v2.1.
+- **[Security Policy](./SECURITY.md)**: Responsible disclosure process and reporting procedure.
 
 ---
 
-## 👤 Author
+## 📄 License
+
+This project is open-source and licensed under the [MIT License](./LICENSE).
+
+---
+
+## 👤 Author & Maintainer
 
 Developed with ❤️ by **[UXxArunjay](https://github.com/UXxArunjay)**
 
