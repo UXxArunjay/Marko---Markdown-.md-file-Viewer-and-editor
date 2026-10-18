@@ -7,5 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   saveFile: (filePath, content) => ipcRenderer.invoke('save-file', { filePath, content }),
   checkDefaultApp: () => ipcRenderer.invoke('check-default-app'),
-  setDefaultApp: () => ipcRenderer.invoke('set-default-app')
+  setDefaultApp: () => ipcRenderer.invoke('set-default-app'),
+  claudeRequest: (payload) => ipcRenderer.invoke('claude-request', payload)
 });

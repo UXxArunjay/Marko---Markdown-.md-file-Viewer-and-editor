@@ -154,6 +154,25 @@ ipcMain.handle('save-file', async (_event, { filePath, content }) => {
   }
 });
 
+ipcMain.handle('claude-request', async (_event, { endpoint, apiKey, body }) => {
+  try {
+    const res = await fetch(endpoint || 'https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  } catch (err) {
+    console.error('[Marko] Claude IPC request error:', err);
+    return { ok: false, status: 500, error: err.message };
+  }
+});
+
 // Default App Handlers
 ipcMain.handle('check-default-app', () => {
   try {

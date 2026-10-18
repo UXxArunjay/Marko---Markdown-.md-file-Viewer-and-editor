@@ -12,6 +12,8 @@ import { MarkdownEditor } from './editor.js';
 import { DocumentOutline } from './outline.js';
 import { DocumentSearch } from './search.js';
 import { ExportManager } from './export-manager.js';
+import { ClaudeService } from './claude-service.js';
+import { ClaudeAssistantUI } from './claude-assistant-ui.js';
 
 // ==========================================================================
 // Application State & Controller
@@ -41,6 +43,7 @@ class AppController {
       btnOpenFile: document.getElementById('btnOpenFile'),
       btnSaveFile: document.getElementById('btnSaveFile'),
       btnSidebarToggle: document.getElementById('btnSidebarToggle'),
+      btnClaudeToggle: document.getElementById('btnClaudeToggle'),
 
       // Containers
       appSidebar: document.getElementById('appSidebar'),
@@ -126,6 +129,21 @@ class AppController {
       }
     });
 
+    this.previousAiContent = null;
+    this.claudeService = new ClaudeService();
+    this.claudeUI = new ClaudeAssistantUI({
+      claudeService: this.claudeService,
+      getDocContext: () => ({
+        fileName: this.currentFileName,
+        content: this.currentContent,
+        wordCount: this.dom.statWords ? parseInt(this.dom.statWords.textContent.replace(/,/g, ''), 10) || 0 : 0,
+        selection: this.getSelectedText()
+      }),
+      onApplyContent: (newContent) => this.applyAiContent(newContent),
+      onInsertAtCursor: (snippet) => this.insertSnippetAtCursor(snippet),
+      showToast: (msg, type) => this.showToast(msg, type)
+    });
+
     this.deferredPrompt = null;
     this.init();
   }
@@ -208,6 +226,9 @@ class AppController {
     this.updateStats();
     this.updateDirtyIndicator(false);
     this.updateRecentFilesList();
+    if (this.claudeUI) {
+      this.claudeUI.updateContextPill();
+    }
   }
 
   handleFileLoaded({ name, content, handle }) {
@@ -224,6 +245,9 @@ class AppController {
     // If split mode, re-render markdown live
     if (this.currentMode === 'split') {
       this.renderMarkdown(false); // Skip full scroll jump
+    }
+    if (this.claudeUI) {
+      this.claudeUI.updateContextPill();
     }
   }
 
@@ -366,6 +390,20 @@ class AppController {
     // Sidebar Toggle
     this.dom.btnSidebarToggle.addEventListener('click', () => {
       this.dom.appSidebar.classList.toggle('is-collapsed');
+    });
+
+    // Claude AI Toggle Button
+    if (this.dom.btnClaudeToggle) {
+      this.dom.btnClaudeToggle.addEventListener('click', () => {
+        this.claudeUI.toggle();
+      });
+    }
+
+    // Selection changes update Claude context pill
+    document.addEventListener('selectionchange', () => {
+      if (this.claudeUI && this.claudeUI.isOpen) {
+        this.claudeUI.updateContextPill();
+      }
     });
 
     // File Action Buttons
@@ -535,6 +573,9 @@ class AppController {
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'b') {
         e.preventDefault();
         this.dom.appSidebar.classList.toggle('is-collapsed');
+      } else if ((isCmdOrCtrl && e.key.toLowerCase() === 'j') || (e.altKey && e.key.toLowerCase() === 'c')) {
+        e.preventDefault();
+        this.claudeUI.toggle();
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'p') {
         e.preventDefault();
         ExportManager.exportToPdf();
@@ -715,6 +756,43 @@ class AppController {
     } catch (err) {
       console.error('[Marko] Failed to trigger set default app:', err);
       this.showToast('Could not open default app dialog', 'error');
+    }
+  }
+
+  getSelectedText() {
+    if (this.currentMode === 'edit' || this.currentMode === 'split') {
+      const start = this.dom.editorTextarea.selectionStart;
+      const end = this.dom.editorTextarea.selectionEnd;
+      if (start !== end) {
+        return this.dom.editorTextarea.value.substring(start, end);
+      }
+    }
+    const winSel = window.getSelection();
+    return winSel ? winSel.toString() : '';
+  }
+
+  applyAiContent(newContent) {
+    this.previousAiContent = this.currentContent;
+    this.currentContent = newContent;
+    this.editor.setContent(newContent);
+    this.renderMarkdown();
+    this.updateStats();
+    this.updateDirtyIndicator(true);
+    if (this.claudeUI) {
+      this.claudeUI.updateContextPill();
+    }
+  }
+
+  insertSnippetAtCursor(snippet) {
+    if (this.currentMode === 'view') {
+      this.setMode('edit');
+    }
+    this.editor.insertBlock(snippet);
+    this.renderMarkdown();
+    this.updateStats();
+    this.updateDirtyIndicator(true);
+    if (this.claudeUI) {
+      this.claudeUI.updateContextPill();
     }
   }
 

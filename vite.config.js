@@ -8,6 +8,16 @@ export default defineConfig({
     host: true,
     watch: {
       ignored: ['**/release/**']
+    },
+    proxy: {
+      '/api/claude': {
+        target: 'https://api.anthropic.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/claude/, ''),
+        headers: {
+          'anthropic-version': '2023-06-01'
+        }
+      }
     }
   },
   build: {
