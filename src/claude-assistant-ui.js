@@ -419,6 +419,11 @@ export class ClaudeAssistantUI {
       btnHeader.classList.toggle('is-active', this.isOpen);
     }
 
+    const btnMobileNav = document.getElementById('mNavClaude');
+    if (btnMobileNav) {
+      btnMobileNav.classList.toggle('is-active', this.isOpen);
+    }
+
     if (this.isOpen) {
       this.updateContextPill();
       setTimeout(() => {

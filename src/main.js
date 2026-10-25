@@ -99,7 +99,35 @@ class AppController {
       btnSetAsDefault: document.getElementById('btnSetAsDefault'),
       btnDismissDefaultBanner: document.getElementById('btnDismissDefaultBanner'),
       btnNeverAskDefault: document.getElementById('btnNeverAskDefault'),
-      btnModalSetDefault: document.getElementById('btnModalSetDefault')
+      btnModalSetDefault: document.getElementById('btnModalSetDefault'),
+
+      // Mobile Drawer & Navigation Elements
+      sidebarBackdrop: document.getElementById('sidebarBackdrop'),
+      btnSidebarCloseMobile: document.getElementById('btnSidebarCloseMobile'),
+      btnMobileMore: document.getElementById('btnMobileMore'),
+      mobileBottomNav: document.getElementById('mobileBottomNav'),
+      mNavView: document.getElementById('mNavView'),
+      mNavEdit: document.getElementById('mNavEdit'),
+      mNavSave: document.getElementById('mNavSave'),
+      mDirtyDot: document.getElementById('mDirtyDot'),
+      mNavClaude: document.getElementById('mNavClaude'),
+      mNavMore: document.getElementById('mNavMore'),
+
+      // Mobile Bottom Sheet Elements
+      mobileActionsSheet: document.getElementById('mobileActionsSheet'),
+      mobileSheetBackdrop: document.getElementById('mobileSheetBackdrop'),
+      btnCloseMobileSheet: document.getElementById('btnCloseMobileSheet'),
+      mSheetDocName: document.getElementById('mSheetDocName'),
+      mSheetNew: document.getElementById('mSheetNew'),
+      mSheetOpen: document.getElementById('mSheetOpen'),
+      mSheetSearch: document.getElementById('mSheetSearch'),
+      mSheetTOC: document.getElementById('mSheetTOC'),
+      mSheetExportPdf: document.getElementById('mSheetExportPdf'),
+      mSheetExportHtml: document.getElementById('mSheetExportHtml'),
+      mSheetExportMd: document.getElementById('mSheetExportMd'),
+      mSheetTheme: document.getElementById('mSheetTheme'),
+      mSheetThemeLabel: document.getElementById('mSheetThemeLabel'),
+      mSheetShortcuts: document.getElementById('mSheetShortcuts')
     };
 
     // Subsystems
@@ -116,9 +144,9 @@ class AppController {
       this.dom.outlineContainer,
       this.dom.viewerProse,
       (headingId) => {
-        // If on small screen, auto-collapse sidebar after heading click
+        // If on mobile screen, auto-collapse sidebar after heading click
         if (window.innerWidth <= 768) {
-          this.dom.appSidebar.classList.add('is-collapsed');
+          this.closeMobileSidebar();
         }
       }
     );
@@ -151,6 +179,9 @@ class AppController {
   init() {
     this.applyTheme(this.theme);
     this.setMode('view'); // ALWAYS VIEW MODE BY DEFAULT
+    if (window.innerWidth <= 768) {
+      this.closeMobileSidebar();
+    }
     this.loadDocument(this.currentFileName, this.currentContent);
     this.initEventListeners();
     this.initEditorToolbar();
@@ -193,6 +224,9 @@ class AppController {
     this.dom.btnModeEdit.classList.toggle('is-active', mode === 'edit');
     this.dom.btnModeSplit.classList.toggle('is-active', mode === 'split');
 
+    if (this.dom.mNavView) this.dom.mNavView.classList.toggle('is-active', mode === 'view');
+    if (this.dom.mNavEdit) this.dom.mNavEdit.classList.toggle('is-active', mode === 'edit');
+
     if (mode === 'view' || mode === 'split') {
       this.renderMarkdown();
     }
@@ -217,6 +251,9 @@ class AppController {
     this.currentFileName = fileName;
     this.currentContent = content;
     this.dom.currentFileName.textContent = fileName;
+    if (this.dom.mSheetDocName) {
+      this.dom.mSheetDocName.textContent = fileName;
+    }
     this.editor.setContent(content);
     this.fileManager.setCurrentFile(fileName, content, fileHandle, filePath);
 
@@ -322,6 +359,9 @@ class AppController {
 
   updateDirtyIndicator(isDirty) {
     this.dom.dirtyIndicator.style.display = isDirty ? 'inline-block' : 'none';
+    if (this.dom.mDirtyDot) {
+      this.dom.mDirtyDot.style.display = isDirty ? 'block' : 'none';
+    }
   }
 
   updateStats() {
@@ -356,6 +396,9 @@ class AppController {
 
     this.dom.recentFilesContainer.querySelectorAll('.recent-file-item').forEach(el => {
       el.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          this.closeMobileSidebar();
+        }
         const name = el.getAttribute('data-name');
         if (name === this.currentFileName) return;
         this.fileManager.openFile();
@@ -372,10 +415,79 @@ class AppController {
     localStorage.setItem('md_view_theme', theme);
     updateMermaidTheme(theme === 'dark');
 
+    if (this.dom.mSheetThemeLabel) {
+      const names = { dark: 'Theme: Dark 🌙', light: 'Theme: Light ☀️', sepia: 'Theme: Sepia 📜' };
+      this.dom.mSheetThemeLabel.textContent = names[theme] || 'Theme';
+    }
+
     // Re-render Mermaid diagrams with appropriate theme if in viewer
     if (this.currentMode === 'view' || this.currentMode === 'split') {
       this.renderMarkdown();
     }
+  }
+
+  cycleTheme() {
+    const cycle = { dark: 'light', light: 'sepia', sepia: 'dark' };
+    const nextTheme = cycle[this.theme] || 'dark';
+    this.applyTheme(nextTheme);
+    this.showToast(`Switched to ${nextTheme.charAt(0).toUpperCase() + nextTheme.slice(1)} Mode`, 'info');
+  }
+
+  // ------------------------------------------------------------------------
+  // Mobile Navigation & Drawer Handlers
+  // ------------------------------------------------------------------------
+  toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      if (this.dom.appSidebar.classList.contains('mobile-open')) {
+        this.closeMobileSidebar();
+      } else {
+        this.openMobileSidebar();
+      }
+    } else {
+      this.dom.appSidebar.classList.toggle('is-collapsed');
+    }
+  }
+
+  openMobileSidebar() {
+    this.dom.appSidebar.classList.remove('is-collapsed');
+    this.dom.appSidebar.classList.add('mobile-open');
+    if (this.dom.sidebarBackdrop) {
+      this.dom.sidebarBackdrop.classList.add('is-active');
+    }
+  }
+
+  closeMobileSidebar() {
+    this.dom.appSidebar.classList.remove('mobile-open');
+    this.dom.appSidebar.classList.add('is-collapsed');
+    if (this.dom.sidebarBackdrop) {
+      this.dom.sidebarBackdrop.classList.remove('is-active');
+    }
+  }
+
+  openMobileActionsSheet() {
+    if (!this.dom.mobileActionsSheet) return;
+    if (this.dom.mSheetDocName) {
+      this.dom.mSheetDocName.textContent = this.currentFileName;
+    }
+    if (this.dom.mSheetThemeLabel) {
+      const names = { dark: 'Theme: Dark 🌙', light: 'Theme: Light ☀️', sepia: 'Theme: Sepia 📜' };
+      this.dom.mSheetThemeLabel.textContent = names[this.theme] || 'Theme';
+    }
+    this.dom.mobileActionsSheet.style.display = 'flex';
+    requestAnimationFrame(() => {
+      this.dom.mobileActionsSheet.classList.add('is-active');
+    });
+  }
+
+  closeMobileActionsSheet() {
+    if (!this.dom.mobileActionsSheet) return;
+    this.dom.mobileActionsSheet.classList.remove('is-active');
+    setTimeout(() => {
+      if (!this.dom.mobileActionsSheet.classList.contains('is-active')) {
+        this.dom.mobileActionsSheet.style.display = 'none';
+      }
+    }, 280);
   }
 
   // ------------------------------------------------------------------------
@@ -389,7 +501,7 @@ class AppController {
 
     // Sidebar Toggle
     this.dom.btnSidebarToggle.addEventListener('click', () => {
-      this.dom.appSidebar.classList.toggle('is-collapsed');
+      this.toggleSidebar();
     });
 
     // Claude AI Toggle Button
@@ -582,7 +694,140 @@ class AppController {
       } else if (e.key === 'Escape') {
         this.dom.newFileModal.classList.remove('is-active');
         this.dom.shortcutsModal.classList.remove('is-active');
+        this.closeMobileActionsSheet();
+        this.closeMobileSidebar();
         this.closeSearchBar();
+        if (this.claudeUI && this.claudeUI.isOpen) {
+          this.claudeUI.toggle(false);
+        }
+      }
+    });
+
+    // Mobile Drawer Close & Backdrop
+    if (this.dom.btnSidebarCloseMobile) {
+      this.dom.btnSidebarCloseMobile.addEventListener('click', () => {
+        this.closeMobileSidebar();
+      });
+    }
+    if (this.dom.sidebarBackdrop) {
+      this.dom.sidebarBackdrop.addEventListener('click', () => {
+        this.closeMobileSidebar();
+      });
+    }
+
+    // Mobile Header More Button
+    if (this.dom.btnMobileMore) {
+      this.dom.btnMobileMore.addEventListener('click', () => {
+        this.openMobileActionsSheet();
+      });
+    }
+
+    // Mobile Bottom Navigation Bar Tabs
+    if (this.dom.mNavView) {
+      this.dom.mNavView.addEventListener('click', () => {
+        this.setMode('view');
+      });
+    }
+    if (this.dom.mNavEdit) {
+      this.dom.mNavEdit.addEventListener('click', () => {
+        this.setMode('edit');
+      });
+    }
+    if (this.dom.mNavSave) {
+      this.dom.mNavSave.addEventListener('click', async () => {
+        const res = await this.fileManager.saveFile(this.currentContent);
+        if (res && res.success) {
+          this.showToast(`Saved "${res.name}" successfully!`, 'success');
+        }
+      });
+    }
+    if (this.dom.mNavClaude) {
+      this.dom.mNavClaude.addEventListener('click', () => {
+        this.claudeUI.toggle();
+      });
+    }
+    if (this.dom.mNavMore) {
+      this.dom.mNavMore.addEventListener('click', () => {
+        this.openMobileActionsSheet();
+      });
+    }
+
+    // Mobile Bottom Actions Sheet
+    if (this.dom.mobileSheetBackdrop) {
+      this.dom.mobileSheetBackdrop.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+      });
+    }
+    if (this.dom.btnCloseMobileSheet) {
+      this.dom.btnCloseMobileSheet.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+      });
+    }
+    if (this.dom.mSheetNew) {
+      this.dom.mSheetNew.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.dom.newFileModal.classList.add('is-active');
+      });
+    }
+    if (this.dom.mSheetOpen) {
+      this.dom.mSheetOpen.addEventListener('click', async () => {
+        this.closeMobileActionsSheet();
+        await this.fileManager.openFile();
+      });
+    }
+    if (this.dom.mSheetSearch) {
+      this.dom.mSheetSearch.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.toggleSearchBar();
+      });
+    }
+    if (this.dom.mSheetTOC) {
+      this.dom.mSheetTOC.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.openMobileSidebar();
+      });
+    }
+    if (this.dom.mSheetExportPdf) {
+      this.dom.mSheetExportPdf.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        ExportManager.exportToPdf();
+      });
+    }
+    if (this.dom.mSheetExportHtml) {
+      this.dom.mSheetExportHtml.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        ExportManager.exportToHtml(this.currentFileName, this.dom.viewerProse.innerHTML);
+        this.showToast('Exported standalone HTML!', 'success');
+      });
+    }
+    if (this.dom.mSheetExportMd) {
+      this.dom.mSheetExportMd.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        ExportManager.exportMarkdown(this.currentFileName, this.currentContent);
+        this.showToast('Downloaded Markdown file!', 'success');
+      });
+    }
+    if (this.dom.mSheetTheme) {
+      this.dom.mSheetTheme.addEventListener('click', () => {
+        this.cycleTheme();
+      });
+    }
+    if (this.dom.mSheetShortcuts) {
+      this.dom.mSheetShortcuts.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.dom.shortcutsModal.classList.add('is-active');
+      });
+    }
+
+    // Responsive screen resize handler
+    window.addEventListener('resize', () => {
+      if (window.innerWidth <= 768) {
+        if (!this.dom.appSidebar.classList.contains('mobile-open')) {
+          this.dom.appSidebar.classList.add('is-collapsed');
+        }
+      } else {
+        this.closeMobileSidebar();
+        this.closeMobileActionsSheet();
       }
     });
   }

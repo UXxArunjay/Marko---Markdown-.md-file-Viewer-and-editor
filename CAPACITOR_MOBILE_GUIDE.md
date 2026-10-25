@@ -51,6 +51,16 @@ In Android Studio:
 2. Click the green **Play (Run)** button.
 3. To generate a release APK: go to **Build > Generate Signed Bundle / APK > APK**.
 
+### Step 5: Direct Command-Line APK Build (No Android Studio required)
+You can directly compile the APK using Gradle from your terminal:
+```powershell
+cd android
+.\gradlew assembleDebug
+```
+The resulting debug APK will be created at:
+`android/app/build/outputs/apk/debug/app-debug.apk`
+(You can also run `npm run build:android` from the project root to automate the build, sync, and Gradle assembly in one step!)
+
 ---
 
 ## 🍏 Step-by-Step iOS Build

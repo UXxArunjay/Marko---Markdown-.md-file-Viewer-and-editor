@@ -237,8 +237,8 @@ export function renderMarkdownToHtml(markdownText) {
 
   // 6. Wrap tables in responsive container
   const finalHtml = cleanHtml
-    .replace(/<table>/g, '<div class="table-responsive-wrapper"><table class="markdown-table">')
-    .replace(/<\/table>/g, '</table></div>');
+    .replace(/<table(\s[^>]*)?>/gi, '<div class="table-responsive-wrapper"><table class="markdown-table"$1>')
+    .replace(/<\/table>/gi, '</table></div>');
 
   return finalHtml;
 }

@@ -6,22 +6,34 @@
 
 <h3>A fast, modern, distraction-free Markdown Viewer and Editor for Windows, macOS, Linux, and Mobile</h3>
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Web%20%7C%20Mobile-green.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor)
+[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Android%20%7C%20Web%20%7C%20macOS-green.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor)
 [![Electron](https://img.shields.io/badge/Electron-44.5-47848F.svg?style=for-the-badge&logo=electron&logoColor=white)](https://electronjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-8.3-646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8.5-119EFF.svg?style=for-the-badge&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
 [![License](https://img.shields.io/badge/license-MIT-purple.svg?style=for-the-badge)](./LICENSE)
 
 <p align="center">
+  <a href="#-downloads--installers">Downloads</a> •
   <a href="#-key-features">Key Features</a> •
-  <a href="#-download--windows-installer">Download & Install</a> •
+  <a href="#-mobile-support-android--ios">Mobile App</a> •
   <a href="#-quick-start--development">Development</a> •
   <a href="#-keyboard-shortcuts">Shortcuts</a> •
-  <a href="#-mobile-support">Mobile</a> •
   <a href="#-license">License</a>
 </p>
 
 </div>
+
+---
+
+## 📥 Downloads & Installers
+
+Get Marko for your favorite operating system:
+
+| Platform | Format | Release | Direct Download |
+| :--- | :--- | :---: | :--- |
+| **📱 Android Phone** | **APK** (`.apk`) | **v1.2.0** | [⬇️ **Download Marko-1.2.0.apk**](./downloads/Marko-1.2.0.apk?raw=true) |
+| **💻 Windows PC** | **Installer** (`.exe`) | **v1.2.0** | [⬇️ **Download Marko-Setup-1.2.0.exe**](./downloads/Marko-Setup-1.2.0.exe?raw=true) • [Releases](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
+| **💻 Windows Portable** | **No Install** (`.zip`) | **v1.2.0** | [⬇️ **Download from Releases**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
 
 ---
 
@@ -34,6 +46,23 @@ When you're ready to make edits, seamlessly switch to **Edit Mode** or a side-by
 ---
 
 ## ✨ Key Features
+
+### 📱 Full Native Mobile Experience (Android & Mobile Web)
+* **Left Slide-Over TOC Drawer:** Off-canvas table of contents with frosted glass backdrop blur and touch-optimized navigation.
+* **Thumb-Zone Bottom Navigation:** 5 quick-access tabs (`View`, `Edit`, `Save`, `Claude AI`, `More`).
+* **Slide-Up Action Sheet:** 3x3 touch grid for New Doc, File Open, Find, Outline, PDF Export, and Themes.
+* **Keyboard-Aware Touch Toolbar:** Single-row horizontally scrollable Markdown formatting bar above the mobile keyboard.
+* **Safe-Area Insets & 100dvh:** Seamless integration on bezel-less screens and notch devices.
+
+### 🌊 Sleek Universal Theme-Matching Scrollbars
+* Custom slim pill scrollbars that automatically adapt color, opacity, and hover states to the active theme (**Dark**, **Light**, or **Warm Sepia**).
+* Zero jarring default browser grey scrollbars; completely unified visual design across all operating systems.
+
+### 🤖 Built-In Claude AI Assistant
+* **Direct Anthropic Integration:** Chat with Claude 3.7 Sonnet, Claude 3.5 Sonnet, and Claude 3.5 Haiku.
+* **Extended Thinking (Long Think):** Toggle deep multi-step reasoning for complex research.
+* **Document Context Awareness:** Claude reads your open Markdown document and current selection.
+* **Visual Diff Review:** Review AI-proposed document changes with interactive line diffs before applying.
 
 ### 👁️ Reading-First Philosophy (Default View Mode)
 Every `.md` file opens instantly in a distraction-free, beautifully formatted reading view. Clean line lengths, elegant headings, and balanced line-height ensure maximum legibility.
@@ -97,24 +126,14 @@ Find terms instantly with `Ctrl + F`. Marko highlights matches directly across t
 
 ### 🌓 Customizable Themes
 Switch between curated themes in 1 click:
-- 🌙 **Dark (Default)**: Eye-friendly deep obsidian aesthetic.
-- ☀️ **Light Mode**: High-contrast, clean day reading.
-- 📜 **Warm Sepia**: Paperback novel style for long-form reading.
+- 🌙 **Dark (Default)**: Eye-friendly deep obsidian aesthetic with matching translucent scrollbars.
+- ☀️ **Light Mode**: High-contrast, clean day reading with subtle slate scrollbars.
+- 📜 **Warm Sepia**: Paperback novel style for long-form reading with warm woodtone scrollbars.
 
 ### 💾 Native File System & File Associations
 - Open and save directly to your local drive with the **File System Access API**.
 - Double-clicking `.md` and `.markdown` files on Windows automatically opens them in Marko.
 - Drag & Drop any `.md` file directly into the application window.
-
----
-
-## 💻 Download & Windows Installer
-
-### Official Windows Release (`v1.1.0`)
-Download the latest Windows installer from the [Releases](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) section:
-
-- **Installer Wizard**: `Marko Setup 1.1.0.exe` (NSIS setup wizard with Desktop & Start Menu shortcuts, `.md` file associations).
-- **Portable Version**: `release/win-unpacked/Marko.exe` (Runs directly without installation).
 
 ---
 
@@ -150,7 +169,7 @@ npm run electron:start
 ```bash
 npm run dist:win
 ```
-The compiled installer will be placed in the `release/` folder as `Marko Setup 1.1.0.exe`.
+The compiled installer will be placed in the `release/` folder as `Marko Setup 1.2.0.exe`.
 
 ---
 
@@ -160,15 +179,16 @@ Marko is pre-configured with **Capacitor 8** for native mobile deployment.
 
 ### Android:
 ```bash
-# 1. Build web distribution
+# Option A: One-step build & generate debug APK
+npm run build:android
+
+# Option B: Manual step-by-step
 npm run build
-
-# 2. Add Android platform (one-time setup)
-npm run cap:add:android
-
-# 3. Open in Android Studio & generate APK / Bundle
+npm run cap:sync
 npm run cap:open:android
 ```
+The output debug APK is generated at:
+`android/app/build/outputs/apk/debug/app-debug.apk` (and copied to `downloads/Marko-1.2.0.apk`).
 
 ### iOS (macOS required):
 ```bash

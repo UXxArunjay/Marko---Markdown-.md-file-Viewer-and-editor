@@ -22,7 +22,8 @@
     "cap:add:android": "cap add android",
     "cap:add:ios": "cap add ios",
     "cap:open:android": "cap open android",
-    "cap:open:ios": "cap open ios"
+    "cap:open:ios": "cap open ios",
+    "build:android": "vite build && cap sync android && cd android && gradlew assembleDebug"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.2",
@@ -31,6 +32,7 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
     "@capacitor/core": "^8.5.2",
     "dompurify": "^3.4.16",
     "highlight.js": "^11.12.0",
