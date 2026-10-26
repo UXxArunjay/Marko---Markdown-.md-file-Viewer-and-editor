@@ -22,7 +22,10 @@ if ($gitStatus) {
 
 # 2. Check tag
 $tagName = "v$Version"
-git tag -d $tagName 2>$null
+$existingTag = git tag -l $tagName
+if ($existingTag) {
+    git tag -d $tagName
+}
 Write-Host "[+] Creating git tag $tagName..." -ForegroundColor Cyan
 git tag -a $tagName -m "$Message"
 
