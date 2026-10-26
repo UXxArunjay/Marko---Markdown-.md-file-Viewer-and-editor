@@ -1,6 +1,6 @@
 {
   "name": "marko-markdown-editor",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Marko — High-performance cross-platform Markdown (.md) Viewer & Editor",
   "author": "Arunjay Patel",
   "homepage": "https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor",
@@ -15,6 +15,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "release": "node scripts/release.mjs",
     "electron:start": "electron . --dev",
     "electron:preview": "electron .",
     "dist:win": "vite build && electron-builder --win nsis",

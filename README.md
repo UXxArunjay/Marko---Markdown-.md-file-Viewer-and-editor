@@ -6,7 +6,7 @@
 
 <h3>A fast, modern, distraction-free Markdown Viewer and Editor for Windows, macOS, Linux, and Mobile</h3>
 
-[![Version](https://img.shields.io/badge/version-1.2.0-blue.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Android%20%7C%20Web%20%7C%20macOS-green.svg?style=for-the-badge)](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor)
 [![Electron](https://img.shields.io/badge/Electron-44.5-47848F.svg?style=for-the-badge&logo=electron&logoColor=white)](https://electronjs.org/)
 [![Capacitor](https://img.shields.io/badge/Capacitor-8.5-119EFF.svg?style=for-the-badge&logo=capacitor&logoColor=white)](https://capacitorjs.com/)
@@ -29,11 +29,14 @@
 
 Get Marko for your favorite operating system:
 
-| Platform | Format | Release | Direct Download |
+| Platform | Format | Release | Official High-Speed Download |
 | :--- | :--- | :---: | :--- |
-| **📱 Android Phone** | **APK** (`.apk`) | **v1.2.0** | [⬇️ **Download Marko-1.2.0.apk**](./downloads/Marko-1.2.0.apk?raw=true) |
-| **💻 Windows PC** | **Installer** (`.exe`) | **v1.2.0** | [⬇️ **Download Marko-Setup-1.2.0.exe**](./downloads/Marko-Setup-1.2.0.exe?raw=true) • [Releases](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
-| **💻 Windows Portable** | **No Install** (`.zip`) | **v1.2.0** | [⬇️ **Download from Releases**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
+| **📱 Android Phone** | **APK** (`.apk`) | **v1.3.0** | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) • [Alternative APK Link](./downloads/Marko-1.2.0.apk?raw=true) |
+| **💻 Windows PC** | **Installer** (`.exe`) | **v1.3.0** | [⬇️ **Download Marko-Setup-1.3.0.exe (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) |
+| **💻 Windows Portable** | **No Install** (`.zip`) | **v1.3.0** | [⬇️ **Download from All Releases**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
+
+> [!TIP]
+> **Recommended:** Always download executable installers and APKs from the official [**GitHub Releases Page**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) to avoid Git LFS pointer text file issues and get maximum download speeds from GitHub CDN.
 
 ---
 
@@ -46,6 +49,21 @@ When you're ready to make edits, seamlessly switch to **Edit Mode** or a side-by
 ---
 
 ## ✨ Key Features
+
+### 🧘 Single-Tap Zen Fullscreen Mode
+* **Distraction-Free Immersion:** Tap anywhere in the reading area to instantly collapse all headers, toolbars, and menus into pure fullscreen mode.
+* **1-Tap Restore:** Single tap anywhere again (or press `Esc` / `F11`) to immediately bring back navigation controls.
+* **Smart Tap Detection:** Intelligently ignores taps on links, task checkboxes, code copy buttons, and text selections.
+
+### ℹ️ Integrated About Marko & Update Center
+* **Built-In Version Details:** View the exact version, release notes, and architecture stack directly inside the app.
+* **Live "Check for Updates" Button:** 1-click check against the GitHub Releases API to notify you of newer releases with direct download links.
+* **Persistent Changelog:** Complete update history available offline within the application.
+
+### 📈 Reading Progress Bar & Typography Controls
+* **Live Scroll Indicator:** Sleek accent progress bar at the very top of the window indicating reading completion from 0% to 100%.
+* **Reading Style Customizer:** Seamlessly adjust font family (Modern Sans, Literary Serif, Monospace), font size, and column width.
+* **Auto-Save Draft Recovery:** Silent background persistence protects unsaved notes if the browser or system restarts.
 
 ### 📱 Full Native Mobile Experience (Android & Mobile Web)
 * **Left Slide-Over TOC Drawer:** Off-canvas table of contents with frosted glass backdrop blur and touch-optimized navigation.

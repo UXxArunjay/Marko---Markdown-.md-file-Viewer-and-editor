@@ -14,6 +14,7 @@ import { DocumentSearch } from './search.js';
 import { ExportManager } from './export-manager.js';
 import { ClaudeService } from './claude-service.js';
 import { ClaudeAssistantUI } from './claude-assistant-ui.js';
+import { APP_INFO, checkForAppUpdates } from './version-info.js';
 
 // ==========================================================================
 // Application State & Controller
@@ -26,12 +27,28 @@ class AppController {
     this.currentContent = SAMPLE_DOCS.welcome.content;
     this.theme = localStorage.getItem('md_view_theme') || 'dark';
 
+    // Zen Fullscreen & Reading Preferences State
+    this.isFullscreen = false;
+    this.singleTapFullscreenEnabled = localStorage.getItem('marko_single_tap_fullscreen') !== 'false';
+    this.readingFont = localStorage.getItem('marko_font_family') || 'sans';
+    this.readingFontSize = localStorage.getItem('marko_font_size') || '16';
+    this.readingWidth = localStorage.getItem('marko_reading_width') || '860';
+
     // DOM Elements
     this.dom = {
       body: document.body,
       currentFileName: document.getElementById('currentFileName'),
       dirtyIndicator: document.getElementById('dirtyIndicator'),
       currentFilePill: document.getElementById('currentFilePill'),
+
+      // Reading Progress Bar & Zen Mode HUD
+      readingProgressBar: document.getElementById('readingProgressBar'),
+      zenFloatingHud: document.getElementById('zenFloatingHud'),
+      btnExitZen: document.getElementById('btnExitZen'),
+
+      // Branding & Version
+      brandBadge: document.getElementById('brandBadge'),
+      headerVersionBadge: document.getElementById('headerVersionBadge'),
 
       // Mode buttons
       btnModeView: document.getElementById('btnModeView'),
@@ -44,6 +61,8 @@ class AppController {
       btnSaveFile: document.getElementById('btnSaveFile'),
       btnSidebarToggle: document.getElementById('btnSidebarToggle'),
       btnClaudeToggle: document.getElementById('btnClaudeToggle'),
+      btnFullscreenToggle: document.getElementById('btnFullscreenToggle'),
+      btnTypographyToggle: document.getElementById('btnTypographyToggle'),
 
       // Containers
       appSidebar: document.getElementById('appSidebar'),
@@ -89,6 +108,18 @@ class AppController {
       btnShortcutsToggle: document.getElementById('btnShortcutsToggle'),
       btnCloseShortcutsModal: document.getElementById('btnCloseShortcutsModal'),
 
+      // Marko Hub Modal Elements
+      modalVersionBadge: document.getElementById('modalVersionBadge'),
+      btnCheckForUpdates: document.getElementById('btnCheckForUpdates'),
+      updateCheckResult: document.getElementById('updateCheckResult'),
+      updateStatusText: document.getElementById('updateStatusText'),
+      changelogTimelineContainer: document.getElementById('changelogTimelineContainer'),
+      techSpecsGrid: document.getElementById('techSpecsGrid'),
+      chkSingleTapFullscreen: document.getElementById('chkSingleTapFullscreen'),
+      fontFamilyChoices: document.getElementById('fontFamilyChoices'),
+      fontSizeChoices: document.getElementById('fontSizeChoices'),
+      readingWidthChoices: document.getElementById('readingWidthChoices'),
+
       // Overlay & Toasts
       dropzoneOverlay: document.getElementById('dropzoneOverlay'),
       toastContainer: document.getElementById('toastContainer'),
@@ -125,9 +156,11 @@ class AppController {
       mSheetExportPdf: document.getElementById('mSheetExportPdf'),
       mSheetExportHtml: document.getElementById('mSheetExportHtml'),
       mSheetExportMd: document.getElementById('mSheetExportMd'),
+      mSheetFullscreen: document.getElementById('mSheetFullscreen'),
+      mSheetTypography: document.getElementById('mSheetTypography'),
       mSheetTheme: document.getElementById('mSheetTheme'),
       mSheetThemeLabel: document.getElementById('mSheetThemeLabel'),
-      mSheetShortcuts: document.getElementById('mSheetShortcuts')
+      mSheetAbout: document.getElementById('mSheetAbout')
     };
 
     // Subsystems
@@ -178,6 +211,7 @@ class AppController {
 
   init() {
     this.applyTheme(this.theme);
+    this.applyTypographySettings();
     this.setMode('view'); // ALWAYS VIEW MODE BY DEFAULT
     if (window.innerWidth <= 768) {
       this.closeMobileSidebar();
@@ -186,6 +220,11 @@ class AppController {
     this.initEventListeners();
     this.initEditorToolbar();
     this.initDragAndDrop();
+    this.initReadingProgress();
+    this.initZenFullscreen();
+    this.initMarkoHubModal();
+    this.initTypographyControls();
+    this.initAutoSave();
     this.initPwa();
     this.initElectronIntegration();
     this.updateRecentFilesList();
@@ -625,7 +664,7 @@ class AppController {
     });
 
     this.dom.btnShortcutsToggle.addEventListener('click', () => {
-      this.dom.shortcutsModal.classList.add('is-active');
+      this.openHubModal('updates');
     });
 
     this.dom.btnCloseShortcutsModal.addEventListener('click', () => {
@@ -667,7 +706,13 @@ class AppController {
     window.addEventListener('keydown', (e) => {
       const isCmdOrCtrl = e.metaKey || e.ctrlKey;
 
-      if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
+      if (e.key === 'F11' || (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === 'f')) {
+        e.preventDefault();
+        this.toggleFullscreen();
+      } else if (e.key === 'F1') {
+        e.preventDefault();
+        this.openHubModal('updates');
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
         e.preventDefault();
         this.dom.btnSaveFile.click();
       } else if (isCmdOrCtrl && e.key.toLowerCase() === 'o') {
@@ -692,6 +737,10 @@ class AppController {
         e.preventDefault();
         ExportManager.exportToPdf();
       } else if (e.key === 'Escape') {
+        if (this.isFullscreen) {
+          this.toggleFullscreen(false);
+          return;
+        }
         this.dom.newFileModal.classList.remove('is-active');
         this.dom.shortcutsModal.classList.remove('is-active');
         this.closeMobileActionsSheet();
@@ -807,15 +856,27 @@ class AppController {
         this.showToast('Downloaded Markdown file!', 'success');
       });
     }
+    if (this.dom.mSheetFullscreen) {
+      this.dom.mSheetFullscreen.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.toggleFullscreen(true);
+      });
+    }
+    if (this.dom.mSheetTypography) {
+      this.dom.mSheetTypography.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.openHubModal('typography');
+      });
+    }
     if (this.dom.mSheetTheme) {
       this.dom.mSheetTheme.addEventListener('click', () => {
         this.cycleTheme();
       });
     }
-    if (this.dom.mSheetShortcuts) {
-      this.dom.mSheetShortcuts.addEventListener('click', () => {
+    if (this.dom.mSheetAbout) {
+      this.dom.mSheetAbout.addEventListener('click', () => {
         this.closeMobileActionsSheet();
-        this.dom.shortcutsModal.classList.add('is-active');
+        this.openHubModal('about');
       });
     }
 
@@ -830,6 +891,387 @@ class AppController {
         this.closeMobileActionsSheet();
       }
     });
+  }
+
+  // ------------------------------------------------------------------------
+  // Reading Progress Indicator
+  // ------------------------------------------------------------------------
+  initReadingProgress() {
+    const updateProgress = () => {
+      const container = this.dom.viewerContainer;
+      if (!container || !this.dom.readingProgressBar) return;
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight - container.clientHeight;
+      const progress = scrollHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100)) : 0;
+      this.dom.readingProgressBar.style.width = `${progress}%`;
+    };
+
+    if (this.dom.viewerContainer) {
+      this.dom.viewerContainer.addEventListener('scroll', updateProgress, { passive: true });
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // Zen Fullscreen Mode (Single Tap & HUD)
+  // ------------------------------------------------------------------------
+  initZenFullscreen() {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    // Track touch interactions to distinguish tap from scroll
+    this.dom.viewerContainer.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = Date.now();
+      }
+    }, { passive: true });
+
+    // Single Tap / Click detection on Reading View
+    this.dom.viewerContainer.addEventListener('click', (e) => {
+      // Only trigger in view mode (or when already in fullscreen mode)
+      if (this.currentMode !== 'view' && !this.isFullscreen) return;
+
+      // Check if user disabled single-tap fullscreen
+      if (!this.singleTapFullscreenEnabled) return;
+
+      // If user clicked inside an interactive element, ignore
+      const interactiveTarget = e.target.closest(
+        'a, button, input, select, textarea, .mermaid-actions, .btn-copy-code, .task-list-item-checkbox, .zen-floating-hud, pre, code'
+      );
+      if (interactiveTarget) return;
+
+      // Check if user selected text
+      const selection = window.getSelection();
+      if (selection && selection.toString().trim().length > 0) return;
+
+      // If mobile touch, verify it wasn't a swipe or long-press
+      if (touchStartTime > 0) {
+        const elapsed = Date.now() - touchStartTime;
+        if (elapsed > 450) return; // likely a long press
+      }
+
+      this.toggleFullscreen();
+    });
+
+    // Exit Zen HUD button
+    if (this.dom.btnExitZen) {
+      this.dom.btnExitZen.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleFullscreen(false);
+      });
+    }
+
+    // Header Fullscreen button
+    if (this.dom.btnFullscreenToggle) {
+      this.dom.btnFullscreenToggle.addEventListener('click', () => {
+        this.toggleFullscreen();
+      });
+    }
+
+    // HTML5 fullscreen change event listener
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && this.isFullscreen) {
+        this.toggleFullscreen(false);
+      }
+    });
+  }
+
+  toggleFullscreen(forceState = null) {
+    const willBeFullscreen = forceState !== null ? forceState : !this.isFullscreen;
+    this.isFullscreen = willBeFullscreen;
+    document.body.classList.toggle('is-fullscreen', this.isFullscreen);
+
+    // Update icons
+    if (this.dom.btnFullscreenToggle) {
+      const expIcon = this.dom.btnFullscreenToggle.querySelector('.icon-expand');
+      const compIcon = this.dom.btnFullscreenToggle.querySelector('.icon-compress');
+      if (expIcon && compIcon) {
+        expIcon.style.display = this.isFullscreen ? 'none' : 'block';
+        compIcon.style.display = this.isFullscreen ? 'block' : 'none';
+      }
+    }
+
+    // Show/hide floating Zen HUD
+    if (this.dom.zenFloatingHud) {
+      this.dom.zenFloatingHud.style.display = this.isFullscreen ? 'inline-block' : 'none';
+    }
+
+    // Request/Exit HTML5 Fullscreen API safely
+    if (this.isFullscreen) {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      this.showToast('Zen Fullscreen: Single tap screen or press Esc to exit', 'info');
+    } else {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // Marko Hub Modal (About, Updates, Typography & Shortcuts)
+  // ------------------------------------------------------------------------
+  initMarkoHubModal() {
+    // Populate Version Badge
+    if (this.dom.modalVersionBadge) {
+      this.dom.modalVersionBadge.textContent = `v${APP_INFO.version}`;
+    }
+    if (this.dom.headerVersionBadge) {
+      this.dom.headerVersionBadge.textContent = `v${APP_INFO.version}`;
+    }
+    if (this.dom.updateStatusText) {
+      this.dom.updateStatusText.textContent = `You are running Marko v${APP_INFO.version}`;
+    }
+
+    // Render Changelog
+    if (this.dom.changelogTimelineContainer) {
+      this.dom.changelogTimelineContainer.innerHTML = APP_INFO.changelog.map(item => `
+        <div class="changelog-card ${item.isLatest ? 'is-latest-release' : ''}">
+          <div class="changelog-card-header">
+            <div class="changelog-version-tag">
+              <span class="changelog-v-badge">v${item.version}</span>
+              ${item.isLatest ? '<span class="changelog-current-badge">Current Release</span>' : ''}
+            </div>
+            <span class="changelog-date">${item.date}</span>
+          </div>
+          <div class="changelog-title">${item.title}</div>
+          <ul class="changelog-list">
+            ${item.highlights.map(h => `<li>${h}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+    }
+
+    // Render Tech Specs Grid
+    if (this.dom.techSpecsGrid) {
+      this.dom.techSpecsGrid.innerHTML = APP_INFO.techStack.map(tech => `
+        <div class="tech-spec-chip">
+          <strong>${tech.name}</strong>
+          <span>v${tech.version}</span>
+        </div>
+      `).join('');
+    }
+
+    // Wire Modal Tab Buttons
+    if (this.dom.shortcutsModal) {
+      const tabButtons = this.dom.shortcutsModal.querySelectorAll('.modal-tab-btn');
+      const tabPanes = this.dom.shortcutsModal.querySelectorAll('.modal-tab-pane');
+
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetTab = btn.getAttribute('data-tab');
+          tabButtons.forEach(b => b.classList.toggle('is-active', b === btn));
+          tabPanes.forEach(pane => {
+            const isTarget = pane.id.toLowerCase() === `tab${targetTab}`;
+            pane.style.display = isTarget ? 'block' : 'none';
+            pane.classList.toggle('is-active', isTarget);
+          });
+        });
+      });
+    }
+
+    // Brand badge click opens About Marko Hub
+    if (this.dom.brandBadge) {
+      this.dom.brandBadge.addEventListener('click', () => {
+        this.openHubModal('updates');
+      });
+    }
+
+    // Typography button opens Typography Tab
+    if (this.dom.btnTypographyToggle) {
+      this.dom.btnTypographyToggle.addEventListener('click', () => {
+        this.openHubModal('typography');
+      });
+    }
+
+    // Check for updates button
+    if (this.dom.btnCheckForUpdates) {
+      this.dom.btnCheckForUpdates.addEventListener('click', async () => {
+        const spinIcon = this.dom.btnCheckForUpdates.querySelector('.spin-icon');
+        if (spinIcon) spinIcon.classList.add('is-spinning');
+        this.dom.btnCheckForUpdates.disabled = true;
+
+        if (this.dom.updateCheckResult) {
+          this.dom.updateCheckResult.style.display = 'block';
+          this.dom.updateCheckResult.className = 'update-check-result';
+          this.dom.updateCheckResult.innerHTML = 'Connecting to GitHub Releases API...';
+        }
+
+        const res = await checkForAppUpdates();
+        if (spinIcon) spinIcon.classList.remove('is-spinning');
+        this.dom.btnCheckForUpdates.disabled = false;
+
+        if (!this.dom.updateCheckResult) return;
+
+        if (res.hasUpdate) {
+          this.dom.updateCheckResult.className = 'update-check-result result-update';
+          this.dom.updateCheckResult.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <strong>🎉 A new version of Marko (${res.latestVersion}) is available!</strong>
+                <div style="font-size: 11.5px; opacity: 0.85; margin-top: 2px;">Published: ${res.publishedAt} • Current: v${res.currentVersion}</div>
+              </div>
+              <a href="${res.releaseUrl}" target="_blank" rel="noopener" class="btn-action btn-primary" style="font-size: 12px; padding: 4px 10px; text-decoration: none;">
+                Download Update
+              </a>
+            </div>
+          `;
+        } else if (res.error) {
+          this.dom.updateCheckResult.className = 'update-check-result result-error';
+          this.dom.updateCheckResult.innerHTML = `
+            <div>
+              <strong>Notice:</strong> Unable to check GitHub updates directly (${res.error}).
+              <div style="margin-top: 4px;">
+                <a href="${res.releaseUrl}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline;">
+                  View GitHub Releases page manually →
+                </a>
+              </div>
+            </div>
+          `;
+        } else {
+          this.dom.updateCheckResult.className = 'update-check-result result-latest';
+          this.dom.updateCheckResult.innerHTML = `
+            <strong>✓ You're up to date!</strong> Marko v${APP_INFO.version} is currently the latest stable release.
+          `;
+        }
+      });
+    }
+  }
+
+  openHubModal(tabName = 'updates') {
+    if (!this.dom.shortcutsModal) return;
+    this.dom.shortcutsModal.classList.add('is-active');
+
+    const tabButtons = this.dom.shortcutsModal.querySelectorAll('.modal-tab-btn');
+    const tabPanes = this.dom.shortcutsModal.querySelectorAll('.modal-tab-pane');
+
+    tabButtons.forEach(b => {
+      const isMatch = b.getAttribute('data-tab') === tabName;
+      b.classList.toggle('is-active', isMatch);
+    });
+
+    tabPanes.forEach(pane => {
+      const isTarget = pane.id.toLowerCase() === `tab${tabName}`;
+      pane.style.display = isTarget ? 'block' : 'none';
+      pane.classList.toggle('is-active', isTarget);
+    });
+  }
+
+  // ------------------------------------------------------------------------
+  // Reading Typography & Appearance Settings
+  // ------------------------------------------------------------------------
+  applyTypographySettings() {
+    // Font Family
+    document.body.classList.remove('font-sans', 'font-serif', 'font-mono');
+    if (this.readingFont !== 'sans') {
+      document.body.classList.add(`font-${this.readingFont}`);
+    }
+
+    // Font Size
+    document.body.classList.remove('font-size-14', 'font-size-16', 'font-size-18', 'font-size-20');
+    document.body.classList.add(`font-size-${this.readingFontSize}`);
+
+    // Column Width
+    if (this.dom.viewerProse) {
+      this.dom.viewerProse.classList.remove('width-680', 'width-860', 'width-1080', 'width-full');
+      const widthClass = this.readingWidth === '100%' ? 'width-full' : `width-${this.readingWidth}`;
+      this.dom.viewerProse.classList.add(widthClass);
+    }
+  }
+
+  initTypographyControls() {
+    // Font Family Choice Buttons
+    if (this.dom.fontFamilyChoices) {
+      const btns = this.dom.fontFamilyChoices.querySelectorAll('.choice-btn');
+      btns.forEach(btn => {
+        const font = btn.getAttribute('data-font');
+        btn.classList.toggle('is-active', font === this.readingFont);
+        btn.addEventListener('click', () => {
+          this.readingFont = font;
+          localStorage.setItem('marko_font_family', font);
+          btns.forEach(b => b.classList.toggle('is-active', b === btn));
+          this.applyTypographySettings();
+        });
+      });
+    }
+
+    // Font Size Choice Buttons
+    if (this.dom.fontSizeChoices) {
+      const btns = this.dom.fontSizeChoices.querySelectorAll('.choice-btn');
+      btns.forEach(btn => {
+        const size = btn.getAttribute('data-size');
+        btn.classList.toggle('is-active', size === this.readingFontSize);
+        btn.addEventListener('click', () => {
+          this.readingFontSize = size;
+          localStorage.setItem('marko_font_size', size);
+          btns.forEach(b => b.classList.toggle('is-active', b === btn));
+          this.applyTypographySettings();
+        });
+      });
+    }
+
+    // Reading Width Choice Buttons
+    if (this.dom.readingWidthChoices) {
+      const btns = this.dom.readingWidthChoices.querySelectorAll('.choice-btn');
+      btns.forEach(btn => {
+        const width = btn.getAttribute('data-width');
+        btn.classList.toggle('is-active', width === this.readingWidth);
+        btn.addEventListener('click', () => {
+          this.readingWidth = width;
+          localStorage.setItem('marko_reading_width', width);
+          btns.forEach(b => b.classList.toggle('is-active', b === btn));
+          this.applyTypographySettings();
+        });
+      });
+    }
+
+    // Single Tap Fullscreen Toggle
+    if (this.dom.chkSingleTapFullscreen) {
+      this.dom.chkSingleTapFullscreen.checked = this.singleTapFullscreenEnabled;
+      this.dom.chkSingleTapFullscreen.addEventListener('change', (e) => {
+        this.singleTapFullscreenEnabled = e.target.checked;
+        localStorage.setItem('marko_single_tap_fullscreen', e.target.checked ? 'true' : 'false');
+        this.showToast(
+          e.target.checked ? 'Single-tap Zen Fullscreen enabled' : 'Single-tap Zen Fullscreen disabled',
+          'info'
+        );
+      });
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // Auto-Save Draft Protection
+  // ------------------------------------------------------------------------
+  initAutoSave() {
+    // Check for recovered draft from previous session
+    try {
+      const backupStr = localStorage.getItem('marko_draft_backup');
+      if (backupStr) {
+        const backup = JSON.parse(backupStr);
+        if (backup && backup.content && backup.content !== this.currentContent) {
+          const ageHours = (Date.now() - (backup.timestamp || 0)) / (1000 * 60 * 60);
+          if (ageHours < 48) {
+            console.log(`[Marko] Found recoverable draft for "${backup.name}" (${backup.content.length} chars)`);
+          }
+        }
+      }
+    } catch (e) {}
+
+    // Auto-save timer every 3 seconds
+    setInterval(() => {
+      if (this.fileManager && this.fileManager.isDirty(this.currentContent)) {
+        try {
+          localStorage.setItem('marko_draft_backup', JSON.stringify({
+            name: this.currentFileName,
+            content: this.currentContent,
+            timestamp: Date.now()
+          }));
+        } catch (e) {}
+      }
+    }, 3000);
   }
 
   toggleSearchBar() {

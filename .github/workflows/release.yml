@@ -1,0 +1,94 @@
+name: Marko Release & Build Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.3.0)'
+        required: false
+        default: 'v1.3.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Publish Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Set up Java JDK 17 (for Android build)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Package Windows Installer (.exe)
+        run: npx electron-builder --win nsis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Build Android Debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Prepare Release Artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts-out
+          
+          # Copy Windows Installer
+          $exe = Get-ChildItem -Path release -Filter "*.exe" | Select-Object -First 1
+          if ($exe) {
+            Copy-Item $exe.FullName -Destination "artifacts-out\Marko-Setup-1.3.0.exe"
+            Write-Host "Found Windows Installer: $($exe.Name)"
+          }
+
+          # Copy Android APK
+          $apk = Get-ChildItem -Path "android/app/build/outputs/apk/debug" -Filter "*.apk" | Select-Object -First 1
+          if ($apk) {
+            Copy-Item $apk.FullName -Destination "artifacts-out\Marko-1.3.0.apk"
+            Write-Host "Found Android APK: $($apk.Name)"
+          }
+
+          Get-ChildItem -Path artifacts-out
+
+      - name: Publish Official GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+        with:
+          name: "Marko ${{ github.ref_name || inputs.tag_name }} — Release"
+          tag_name: ${{ github.ref_name || inputs.tag_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts-out/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
