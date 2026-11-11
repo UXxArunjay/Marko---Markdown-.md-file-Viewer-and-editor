@@ -15,6 +15,9 @@ import { ExportManager } from './export-manager.js';
 import { ClaudeService } from './claude-service.js';
 import { ClaudeAssistantUI } from './claude-assistant-ui.js';
 import { APP_INFO, checkForAppUpdates } from './version-info.js';
+import { HomepageView } from './homepage-view.js';
+import { TouchManager } from './touch-manager.js';
+import { USER_MANUAL_NAME, USER_MANUAL_CONTENT } from './user-manual-content.js';
 
 // ==========================================================================
 // Application State & Controller
@@ -26,6 +29,7 @@ class AppController {
     this.currentFileName = 'README.md';
     this.currentContent = SAMPLE_DOCS.welcome.content;
     this.theme = localStorage.getItem('md_view_theme') || 'dark';
+    this.isHomepageActive = false;
 
     // Zen Fullscreen & Reading Preferences State
     this.isFullscreen = false;
@@ -50,6 +54,11 @@ class AppController {
       brandBadge: document.getElementById('brandBadge'),
       headerVersionBadge: document.getElementById('headerVersionBadge'),
 
+      // Navigation & Homepage Buttons
+      btnNavHome: document.getElementById('btnNavHome'),
+      btnHeaderFavorite: document.getElementById('btnHeaderFavorite'),
+      btnNavManual: document.getElementById('btnNavManual'),
+
       // Mode buttons
       btnModeView: document.getElementById('btnModeView'),
       btnModeEdit: document.getElementById('btnModeEdit'),
@@ -66,8 +75,30 @@ class AppController {
 
       // Containers
       appSidebar: document.getElementById('appSidebar'),
+      sidebarScrollBody: document.getElementById('sidebarScrollBody'),
+      sidebarBtnHome: document.getElementById('sidebarBtnHome'),
+      sidebarBtnOpen: document.getElementById('sidebarBtnOpen'),
+      sidebarBtnManual: document.getElementById('sidebarBtnManual'),
       outlineContainer: document.getElementById('outlineContainer'),
+      sidebarFavoritesContainer: document.getElementById('sidebarFavoritesContainer'),
       recentFilesContainer: document.getElementById('recentFilesContainer'),
+      sidebarMostOpenedContainer: document.getElementById('sidebarMostOpenedContainer'),
+      sidebarFavBadge: document.getElementById('sidebarFavBadge'),
+      sidebarRecentsBadge: document.getElementById('sidebarRecentsBadge'),
+      sidebarMostOpenedBadge: document.getElementById('sidebarMostOpenedBadge'),
+
+      // Sidebar Section Toggles
+      btnToggleTOC: document.getElementById('btnToggleTOC'),
+      btnToggleFavorites: document.getElementById('btnToggleFavorites'),
+      btnToggleRecents: document.getElementById('btnToggleRecents'),
+      btnToggleMostOpened: document.getElementById('btnToggleMostOpened'),
+      sidebarSectionTOC: document.getElementById('sidebarSectionTOC'),
+      sidebarSectionFavorites: document.getElementById('sidebarSectionFavorites'),
+      sidebarSectionRecents: document.getElementById('sidebarSectionRecents'),
+      sidebarSectionMostOpened: document.getElementById('sidebarSectionMostOpened'),
+
+      // Panes
+      homepageContainer: document.getElementById('homepageContainer'),
       viewerContainer: document.getElementById('viewerContainer'),
       viewerProse: document.getElementById('viewerProse'),
       editorContainer: document.getElementById('editorContainer'),
@@ -107,6 +138,7 @@ class AppController {
       shortcutsModal: document.getElementById('shortcutsModal'),
       btnShortcutsToggle: document.getElementById('btnShortcutsToggle'),
       btnCloseShortcutsModal: document.getElementById('btnCloseShortcutsModal'),
+      btnModalOpenManual: document.getElementById('btnModalOpenManual'),
 
       // Marko Hub Modal Elements
       modalVersionBadge: document.getElementById('modalVersionBadge'),
@@ -149,6 +181,10 @@ class AppController {
       mobileSheetBackdrop: document.getElementById('mobileSheetBackdrop'),
       btnCloseMobileSheet: document.getElementById('btnCloseMobileSheet'),
       mSheetDocName: document.getElementById('mSheetDocName'),
+      mSheetHome: document.getElementById('mSheetHome'),
+      mSheetManual: document.getElementById('mSheetManual'),
+      mSheetFavorite: document.getElementById('mSheetFavorite'),
+      mSheetFavLabel: document.getElementById('mSheetFavLabel'),
       mSheetNew: document.getElementById('mSheetNew'),
       mSheetOpen: document.getElementById('mSheetOpen'),
       mSheetSearch: document.getElementById('mSheetSearch'),
@@ -166,7 +202,13 @@ class AppController {
     // Subsystems
     this.fileManager = new FileManager({
       onFileLoaded: (fileData) => this.handleFileLoaded(fileData),
-      onDirtyStateChange: (isDirty) => this.updateDirtyIndicator(isDirty)
+      onDirtyStateChange: (isDirty) => this.updateDirtyIndicator(isDirty),
+      onHistoryChange: () => {
+        this.updateSidebarFileSections();
+        if (this.isHomepageActive && this.homepage) {
+          this.homepage.render();
+        }
+      }
     });
 
     this.editor = new MarkdownEditor(this.dom.editorTextarea, {
@@ -205,6 +247,9 @@ class AppController {
       showToast: (msg, type) => this.showToast(msg, type)
     });
 
+    this.homepage = new HomepageView(this, this.dom.homepageContainer);
+    this.touchManager = new TouchManager(this);
+
     this.deferredPrompt = null;
     this.init();
   }
@@ -216,7 +261,11 @@ class AppController {
     if (window.innerWidth <= 768) {
       this.closeMobileSidebar();
     }
-    this.loadDocument(this.currentFileName, this.currentContent);
+
+    // Default startup shows the Redesigned Homepage (Requirement 4)
+    // and does NOT display the manual automatically (Requirement 5)
+    this.showHomepage();
+
     this.initEventListeners();
     this.initEditorToolbar();
     this.initDragAndDrop();
@@ -228,7 +277,7 @@ class AppController {
     this.initPwa();
     this.initElectronIntegration();
     this.initMobileIntegration();
-    this.updateRecentFilesList();
+    this.updateSidebarFileSections();
   }
 
   initMobileIntegration() {
@@ -306,9 +355,89 @@ class AppController {
   }
 
   // ------------------------------------------------------------------------
-  // Document Loading & Rendering
+  // Document Loading, Homepage & Views
   // ------------------------------------------------------------------------
+  showHomepage() {
+    this.isHomepageActive = true;
+    document.body.classList.add('view-homepage');
+    if (this.dom.btnNavHome) {
+      this.dom.btnNavHome.classList.add('is-active');
+    }
+    if (this.dom.sidebarBtnHome) {
+      this.dom.sidebarBtnHome.classList.add('is-active');
+    }
+    this.dom.currentFileName.textContent = 'Homepage';
+    if (this.dom.mSheetDocName) {
+      this.dom.mSheetDocName.textContent = 'Marko Homepage';
+    }
+    this.updateHeaderFavoritePill();
+    if (this.homepage) {
+      this.homepage.render();
+    }
+  }
+
+  showDocumentView() {
+    this.isHomepageActive = false;
+    document.body.classList.remove('view-homepage');
+    if (this.dom.btnNavHome) {
+      this.dom.btnNavHome.classList.remove('is-active');
+    }
+    if (this.dom.sidebarBtnHome) {
+      this.dom.sidebarBtnHome.classList.remove('is-active');
+    }
+    this.dom.currentFileName.textContent = this.currentFileName;
+    if (this.dom.mSheetDocName) {
+      this.dom.mSheetDocName.textContent = this.currentFileName;
+    }
+  }
+
+  openUserManual() {
+    this.loadDocument(USER_MANUAL_NAME, USER_MANUAL_CONTENT);
+    this.showToast('Opened Marko User Manual', 'info');
+  }
+
+  openTemplate(key) {
+    const doc = SAMPLE_DOCS[key] || SAMPLE_DOCS.blank;
+    this.loadDocument(doc.name, doc.content);
+    if (this.dom.newFileModal) {
+      this.dom.newFileModal.classList.remove('is-active');
+    }
+    this.showToast(`Created document: ${doc.name}`, 'success');
+  }
+
+  updateHeaderFavoritePill() {
+    if (!this.dom.btnHeaderFavorite) return;
+    if (this.isHomepageActive) {
+      this.dom.btnHeaderFavorite.style.display = 'none';
+      return;
+    }
+    this.dom.btnHeaderFavorite.style.display = 'inline-flex';
+    const isFav = this.fileManager.isFavorite(this.fileManager.currentFilePath || this.currentFileName);
+    this.dom.btnHeaderFavorite.classList.toggle('is-starred', isFav);
+    this.dom.btnHeaderFavorite.title = isFav ? 'Starred in Favorites (Click to unstar)' : 'Add to Favorites (Click to star)';
+    const poly = this.dom.btnHeaderFavorite.querySelector('polygon');
+    if (poly) {
+      poly.setAttribute('fill', isFav ? 'currentColor' : 'none');
+    }
+    if (this.dom.mSheetFavLabel) {
+      this.dom.mSheetFavLabel.textContent = isFav ? 'Starred ⭐' : 'Favorite';
+    }
+  }
+
+  toggleCurrentFavorite() {
+    if (this.isHomepageActive) return;
+    const key = this.fileManager.currentFilePath || this.currentFileName;
+    const isNowFav = this.fileManager.toggleFavorite(key, this.currentContent);
+    this.updateHeaderFavoritePill();
+    this.updateSidebarFileSections();
+    if (this.homepage) {
+      this.homepage.render();
+    }
+    this.showToast(isNowFav ? `Starred "${this.currentFileName}"` : `Removed "${this.currentFileName}" from Favorites`, 'success');
+  }
+
   loadDocument(fileName, content, fileHandle = null, filePath = null) {
+    this.showDocumentView();
     this.currentFileName = fileName;
     this.currentContent = content;
     this.dom.currentFileName.textContent = fileName;
@@ -323,14 +452,15 @@ class AppController {
     this.renderMarkdown();
     this.updateStats();
     this.updateDirtyIndicator(false);
-    this.updateRecentFilesList();
+    this.updateHeaderFavoritePill();
+    this.updateSidebarFileSections();
     if (this.claudeUI) {
       this.claudeUI.updateContextPill();
     }
   }
 
-  handleFileLoaded({ name, content, handle }) {
-    this.loadDocument(name, content, handle);
+  handleFileLoaded({ name, content, handle, filePath }) {
+    this.loadDocument(name, content, handle, filePath);
     this.showToast(`Opened "${name}"`, 'success');
   }
 
@@ -433,38 +563,160 @@ class AppController {
     this.dom.statReadingTime.textContent = `${stats.readingTimeMin}m`;
   }
 
-  updateRecentFilesList() {
-    const recents = this.fileManager.getRecentFiles();
-    if (!this.dom.recentFilesContainer) return;
+  // ------------------------------------------------------------------------
+  // Sidebar File Sections: Favorites, Recents, and Most Opened
+  // Smoothly rendered with zero clipping or overflow bugs
+  // ------------------------------------------------------------------------
+  updateSidebarFileSections() {
+    const favorites = this.fileManager.getFavoriteFiles();
+    const recents = this.fileManager.getRecentFiles(15);
+    const mostOpened = this.fileManager.getMostOpenedFiles(8);
 
-    if (recents.length === 0) {
-      this.dom.recentFilesContainer.innerHTML = `
-        <div style="font-size:12px; color:var(--text-muted); padding:8px;">No recent files</div>
-      `;
-      return;
+    // Update Section Badges
+    if (this.dom.sidebarFavBadge) this.dom.sidebarFavBadge.textContent = String(favorites.length);
+    if (this.dom.sidebarRecentsBadge) this.dom.sidebarRecentsBadge.textContent = String(recents.length);
+    if (this.dom.sidebarMostOpenedBadge) this.dom.sidebarMostOpenedBadge.textContent = String(mostOpened.length);
+
+    // 1. Favorites List in Sidebar
+    if (this.dom.sidebarFavoritesContainer) {
+      if (favorites.length === 0) {
+        this.dom.sidebarFavoritesContainer.innerHTML = `
+          <div class="sidebar-empty-msg">No starred favorites</div>
+        `;
+      } else {
+        this.dom.sidebarFavoritesContainer.innerHTML = `
+          <div class="sidebar-files-list">
+            ${favorites.map(item => `
+              <div class="sidebar-file-item ${item.name === this.currentFileName && !this.isHomepageActive ? 'is-active' : ''}" data-id="${item.id}" title="${item.preview || item.name}">
+                <div class="sidebar-file-info">
+                  <span style="color:#f59e0b; font-size:12px;">⭐</span>
+                  <span class="sidebar-file-name">${item.name}</span>
+                </div>
+                <button class="sidebar-star-btn is-starred" data-star-id="${item.id}" title="Unstar favorite" onclick="event.stopPropagation();">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        this.dom.sidebarFavoritesContainer.querySelectorAll('.sidebar-file-item').forEach(el => {
+          el.addEventListener('click', async (e) => {
+            if (e.target.closest('.sidebar-star-btn')) return;
+            if (window.innerWidth <= 768) this.closeMobileSidebar();
+            const id = el.getAttribute('data-id');
+            const target = favorites.find(r => r.id === id);
+            if (target) await this.fileManager.openRecord(target);
+          });
+        });
+
+        this.dom.sidebarFavoritesContainer.querySelectorAll('.sidebar-star-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-star-id');
+            const target = favorites.find(r => r.id === id);
+            if (target) {
+              this.fileManager.toggleFavorite(target.path || target.name, target.content);
+              this.updateHeaderFavoritePill();
+              this.updateSidebarFileSections();
+              if (this.isHomepageActive && this.homepage) this.homepage.render();
+            }
+          });
+        });
+      }
     }
 
-    this.dom.recentFilesContainer.innerHTML = `
-      <div class="recent-files-list">
-        ${recents.map(r => `
-          <div class="recent-file-item" data-name="${r.name}" title="${r.preview || r.name}">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${r.name}</span>
+    // 2. Recent Documents in Sidebar
+    if (this.dom.recentFilesContainer) {
+      if (recents.length === 0) {
+        this.dom.recentFilesContainer.innerHTML = `
+          <div class="sidebar-empty-msg">No recent files</div>
+        `;
+      } else {
+        this.dom.recentFilesContainer.innerHTML = `
+          <div class="sidebar-files-list">
+            ${recents.map(item => `
+              <div class="sidebar-file-item ${item.name === this.currentFileName && !this.isHomepageActive ? 'is-active' : ''}" data-id="${item.id}" title="${item.preview || item.name}">
+                <div class="sidebar-file-info">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  </svg>
+                  <span class="sidebar-file-name">${item.name}</span>
+                </div>
+                <button class="sidebar-star-btn ${item.isFavorite ? 'is-starred' : ''}" data-star-id="${item.id}" title="${item.isFavorite ? 'Unstar' : 'Star'}" onclick="event.stopPropagation();">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="${item.isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            `).join('')}
           </div>
-        `).join('')}
-      </div>
-    `;
+        `;
 
-    this.dom.recentFilesContainer.querySelectorAll('.recent-file-item').forEach(el => {
-      el.addEventListener('click', () => {
-        if (window.innerWidth <= 768) {
-          this.closeMobileSidebar();
-        }
-        const name = el.getAttribute('data-name');
-        if (name === this.currentFileName) return;
-        this.fileManager.openFile();
-      });
-    });
+        this.dom.recentFilesContainer.querySelectorAll('.sidebar-file-item').forEach(el => {
+          el.addEventListener('click', async (e) => {
+            if (e.target.closest('.sidebar-star-btn')) return;
+            if (window.innerWidth <= 768) this.closeMobileSidebar();
+            const id = el.getAttribute('data-id');
+            const target = recents.find(r => r.id === id);
+            if (target) await this.fileManager.openRecord(target);
+          });
+        });
+
+        this.dom.recentFilesContainer.querySelectorAll('.sidebar-star-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute('data-star-id');
+            const target = recents.find(r => r.id === id);
+            if (target) {
+              this.fileManager.toggleFavorite(target.path || target.name, target.content);
+              this.updateHeaderFavoritePill();
+              this.updateSidebarFileSections();
+              if (this.isHomepageActive && this.homepage) this.homepage.render();
+            }
+          });
+        });
+      }
+    }
+
+    // 3. Most Opened in Sidebar
+    if (this.dom.sidebarMostOpenedContainer) {
+      if (mostOpened.length === 0) {
+        this.dom.sidebarMostOpenedContainer.innerHTML = `
+          <div class="sidebar-empty-msg">No frequency data yet</div>
+        `;
+      } else {
+        this.dom.sidebarMostOpenedContainer.innerHTML = `
+          <div class="sidebar-files-list">
+            ${mostOpened.map((item, idx) => `
+              <div class="sidebar-file-item ${item.name === this.currentFileName && !this.isHomepageActive ? 'is-active' : ''}" data-id="${item.id}" title="${item.preview || item.name} (${item.openCount || 1} opens)">
+                <div class="sidebar-file-info">
+                  <span style="font-size:10px; font-weight:700; color:var(--text-muted);">#${idx + 1}</span>
+                  <span class="sidebar-file-name">${item.name}</span>
+                </div>
+                <span class="sidebar-file-meta-badge">${item.openCount || 1}x</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        this.dom.sidebarMostOpenedContainer.querySelectorAll('.sidebar-file-item').forEach(el => {
+          el.addEventListener('click', async () => {
+            if (window.innerWidth <= 768) this.closeMobileSidebar();
+            const id = el.getAttribute('data-id');
+            const target = mostOpened.find(r => r.id === id);
+            if (target) await this.fileManager.openRecord(target);
+          });
+        });
+      }
+    }
+  }
+
+  // Alias for backward compatibility
+  updateRecentFilesList() {
+    this.updateSidebarFileSections();
   }
 
   // ------------------------------------------------------------------------
@@ -556,9 +808,80 @@ class AppController {
   // ------------------------------------------------------------------------
   initEventListeners() {
     // Mode switcher buttons
-    this.dom.btnModeView.addEventListener('click', () => this.setMode('view'));
-    this.dom.btnModeEdit.addEventListener('click', () => this.setMode('edit'));
-    this.dom.btnModeSplit.addEventListener('click', () => this.setMode('split'));
+    this.dom.btnModeView.addEventListener('click', () => {
+      if (this.isHomepageActive) this.showDocumentView();
+      this.setMode('view');
+    });
+    this.dom.btnModeEdit.addEventListener('click', () => {
+      if (this.isHomepageActive) this.showDocumentView();
+      this.setMode('edit');
+    });
+    this.dom.btnModeSplit.addEventListener('click', () => {
+      if (this.isHomepageActive) this.showDocumentView();
+      this.setMode('split');
+    });
+
+    // Home Navigation Button
+    if (this.dom.btnNavHome) {
+      this.dom.btnNavHome.addEventListener('click', () => {
+        this.showHomepage();
+      });
+    }
+
+    // Header Favorite Star Button
+    if (this.dom.btnHeaderFavorite) {
+      this.dom.btnHeaderFavorite.addEventListener('click', () => {
+        this.toggleCurrentFavorite();
+      });
+    }
+
+    // Header Manual Button
+    if (this.dom.btnNavManual) {
+      this.dom.btnNavManual.addEventListener('click', () => {
+        this.openUserManual();
+      });
+    }
+
+    // Sidebar Quick Navigation Buttons
+    if (this.dom.sidebarBtnHome) {
+      this.dom.sidebarBtnHome.addEventListener('click', () => {
+        this.showHomepage();
+        if (window.innerWidth <= 768) this.closeMobileSidebar();
+      });
+    }
+    if (this.dom.sidebarBtnOpen) {
+      this.dom.sidebarBtnOpen.addEventListener('click', () => {
+        this.dom.btnOpenFile.click();
+      });
+    }
+    if (this.dom.sidebarBtnManual) {
+      this.dom.sidebarBtnManual.addEventListener('click', () => {
+        this.openUserManual();
+        if (window.innerWidth <= 768) this.closeMobileSidebar();
+      });
+    }
+
+    // Sidebar Collapsible Section Toggles
+    if (this.dom.btnToggleTOC && this.dom.sidebarSectionTOC) {
+      this.dom.btnToggleTOC.addEventListener('click', () => {
+        this.dom.sidebarSectionTOC.classList.toggle('is-collapsed');
+      });
+    }
+    if (this.dom.btnToggleFavorites && this.dom.sidebarSectionFavorites) {
+      this.dom.btnToggleFavorites.addEventListener('click', () => {
+        this.dom.sidebarSectionFavorites.classList.toggle('is-collapsed');
+      });
+    }
+    if (this.dom.btnToggleRecents && this.dom.sidebarSectionRecents) {
+      this.dom.btnToggleRecents.addEventListener('click', () => {
+        this.dom.sidebarSectionRecents.classList.toggle('is-collapsed');
+      });
+    }
+    if (this.dom.btnToggleMostOpened && this.dom.sidebarSectionMostOpened) {
+      this.dom.btnToggleMostOpened.addEventListener('click', () => {
+        this.dom.sidebarSectionMostOpened.classList.toggle('is-collapsed');
+      });
+    }
 
     // Sidebar Toggle
     this.dom.btnSidebarToggle.addEventListener('click', () => {
@@ -597,6 +920,7 @@ class AppController {
 
     // Rename file on pill click
     this.dom.currentFilePill.addEventListener('click', () => {
+      if (this.isHomepageActive) return;
       const newName = prompt('Rename document:', this.currentFileName);
       if (newName && newName.trim()) {
         const cleanName = newName.trim().endsWith('.md') ? newName.trim() : `${newName.trim()}.md`;
@@ -692,6 +1016,13 @@ class AppController {
     this.dom.btnCloseShortcutsModal.addEventListener('click', () => {
       this.dom.shortcutsModal.classList.remove('is-active');
     });
+
+    if (this.dom.btnModalOpenManual) {
+      this.dom.btnModalOpenManual.addEventListener('click', () => {
+        this.dom.shortcutsModal.classList.remove('is-active');
+        this.openUserManual();
+      });
+    }
 
     // Default App Banner & Setting Buttons
     if (this.dom.btnSetAsDefault) {
@@ -832,6 +1163,23 @@ class AppController {
     if (this.dom.btnCloseMobileSheet) {
       this.dom.btnCloseMobileSheet.addEventListener('click', () => {
         this.closeMobileActionsSheet();
+      });
+    }
+    if (this.dom.mSheetHome) {
+      this.dom.mSheetHome.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.showHomepage();
+      });
+    }
+    if (this.dom.mSheetManual) {
+      this.dom.mSheetManual.addEventListener('click', () => {
+        this.closeMobileActionsSheet();
+        this.openUserManual();
+      });
+    }
+    if (this.dom.mSheetFavorite) {
+      this.dom.mSheetFavorite.addEventListener('click', () => {
+        this.toggleCurrentFavorite();
       });
     }
     if (this.dom.mSheetNew) {

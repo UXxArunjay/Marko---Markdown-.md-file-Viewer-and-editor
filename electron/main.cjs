@@ -143,6 +143,27 @@ ipcMain.handle('get-initial-file', () => {
   return file;
 });
 
+ipcMain.handle('read-file', async (_event, targetPath) => {
+  try {
+    if (!targetPath) return { success: false, error: 'No file path provided' };
+    const resolvedPath = path.resolve(targetPath);
+    if (!fs.existsSync(resolvedPath)) {
+      return { success: false, error: 'File does not exist: ' + resolvedPath };
+    }
+    const content = fs.readFileSync(resolvedPath, 'utf-8');
+    return {
+      success: true,
+      content,
+      fileName: path.basename(resolvedPath),
+      filePath: resolvedPath,
+      size: fs.statSync(resolvedPath).size
+    };
+  } catch (err) {
+    console.error('Failed to read file:', err);
+    return { success: false, error: err.message };
+  }
+});
+
 ipcMain.handle('save-file', async (_event, { filePath, content }) => {
   try {
     if (!filePath) return { success: false, error: 'No file path provided' };

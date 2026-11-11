@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 
-const VERSION = '1.3.0';
+const VERSION = '1.4.0';
 const TAG = `v${VERSION}`;
 
 function run(cmd, options = {}) {
@@ -23,7 +23,7 @@ try {
   run('git add .');
   const status = execSync('git status --porcelain', { encoding: 'utf8' }).trim();
   if (status) {
-    run(`git commit -m "feat: Marko v${VERSION} - Zen Fullscreen, Live Updates, Reading Hub & Automated Releases"`);
+    run(`git commit -m "feat: Marko v${VERSION} - Menu bar scrolling fix, Touchscreen gestures, File management & Homepage redesign"`);
     console.log('✓ Changes committed successfully.');
   } else {
     console.log('✓ Working tree is already clean.');

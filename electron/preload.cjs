@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getInitialFile: () => ipcRenderer.invoke('get-initial-file'),
+  readFile: (filePath) => ipcRenderer.invoke('read-file', filePath),
   onOpenFile: (callback) => {
     ipcRenderer.on('open-file', (_event, data) => callback(data));
   },

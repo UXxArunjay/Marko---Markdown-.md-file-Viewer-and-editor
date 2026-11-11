@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Release Tag (e.g. v1.3.0)'
+        description: 'Release Tag (e.g. v1.4.0)'
         required: false
-        default: 'v1.3.0'
+        default: 'v1.4.0'
 
 permissions:
   contents: write
@@ -66,14 +66,14 @@ jobs:
           # Copy Windows Installer
           $exe = Get-ChildItem -Path release -Filter "*.exe" | Select-Object -First 1
           if ($exe) {
-            Copy-Item $exe.FullName -Destination "artifacts-out\Marko-Setup-1.3.0.exe"
+            Copy-Item $exe.FullName -Destination "artifacts-out\$($exe.Name)"
             Write-Host "Found Windows Installer: $($exe.Name)"
           }
 
           # Copy Android APK
           $apk = Get-ChildItem -Path "android/app/build/outputs/apk/debug" -Filter "*.apk" | Select-Object -First 1
           if ($apk) {
-            Copy-Item $apk.FullName -Destination "artifacts-out\Marko-1.3.0.apk"
+            Copy-Item $apk.FullName -Destination "artifacts-out\$($apk.Name)"
             Write-Host "Found Android APK: $($apk.Name)"
           }
 

@@ -5,8 +5,8 @@
 
 export const APP_INFO = {
   name: 'Marko',
-  version: '1.3.0',
-  releaseDate: 'October 2026',
+  version: '1.4.0',
+  releaseDate: 'November 2026',
   channel: 'Stable Channel',
   tagline: 'High-performance cross-platform Markdown (.md) Viewer & Editor',
   author: 'Arunjay Patel',
@@ -29,9 +29,22 @@ export const APP_INFO = {
   ],
   changelog: [
     {
+      version: '1.4.0',
+      date: 'November 2026',
+      isLatest: true,
+      title: 'Menu Bar Scrolling Fix, Touchscreen Gestures, File Management & Redesigned Homepage',
+      highlights: [
+        'Menu Bar Smooth Scrolling Fix: Completely eliminated the scroll clipping glitch in the navigation sidebar, ensuring all headings, favorites, and recent documents scroll smoothly without obstruction.',
+        'Advanced Touchscreen Support: Multi-touch pinch-to-zoom with real-time floating percentage HUD, edge-swipe navigation for drawer, double-tap Zen mode, and momentum scrolling.',
+        'Smart File Management: Integrated tracking for Recently Opened documents, Most Opened files (frequency tracking), and Favorites (starring/bookmarking) with 1-click opening.',
+        'Redesigned Homepage: Dedicated visually rich cards for Favorites, Recent Documents, Most Opened files, Quick Actions, and Starter Templates.',
+        'Comprehensive Offline User Manual: Standalone Markdown manual with dedicated in-app reader, typography controls, and quick navigation (accessible on-demand, not auto-shown on start).'
+      ]
+    },
+    {
       version: '1.3.0',
       date: 'October 2026',
-      isLatest: true,
+      isLatest: false,
       title: 'Zen Fullscreen, About & Update Center, and Reading Enhancements',
       highlights: [
         'Single-Tap Zen Fullscreen Mode: Tap anywhere in reading view to instantly enter distraction-free full screen; tap again to restore controls.',
