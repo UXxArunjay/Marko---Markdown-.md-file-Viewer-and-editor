@@ -227,7 +227,29 @@ class AppController {
     this.initAutoSave();
     this.initPwa();
     this.initElectronIntegration();
+    this.initMobileIntegration();
     this.updateRecentFilesList();
+  }
+
+  initMobileIntegration() {
+    if (typeof window === 'undefined') return;
+
+    window.handleAndroidOpenFile = (fileData) => {
+      if (fileData && typeof fileData.content === 'string') {
+        const name = fileData.fileName || 'document.md';
+        this.loadDocument(name, fileData.content);
+        if (this.fileManager && this.fileManager.saveToRecentFiles) {
+          this.fileManager.saveToRecentFiles(name, fileData.content);
+        }
+        this.updateRecentFilesList();
+        this.showToast(`Opened "${name}"`, 'success');
+      }
+    };
+
+    if (window.__pendingAndroidFile) {
+      window.handleAndroidOpenFile(window.__pendingAndroidFile);
+      window.__pendingAndroidFile = null;
+    }
   }
 
   initElectronIntegration() {

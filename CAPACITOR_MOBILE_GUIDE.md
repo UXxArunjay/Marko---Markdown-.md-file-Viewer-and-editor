@@ -52,14 +52,42 @@ In Android Studio:
 3. To generate a release APK: go to **Build > Generate Signed Bundle / APK > APK**.
 
 ### Step 5: Direct Command-Line APK Build (No Android Studio required)
-You can directly compile the APK using Gradle from your terminal:
+You can directly compile the Release APK (Signed with dedicated Keystore) from your project root:
 ```powershell
-cd android
-.\gradlew assembleDebug
+npm run build:android
 ```
-The resulting debug APK will be created at:
-`android/app/build/outputs/apk/debug/app-debug.apk`
-(You can also run `npm run build:android` from the project root to automate the build, sync, and Gradle assembly in one step!)
+Or specifically:
+```powershell
+# For Signed Release APK (Recommended for device install & distribution):
+npm run build:android:release
+
+# For Debug APK (Testing only):
+npm run build:android:debug
+```
+The resulting signed release APK will be created at:
+`android/app/build/outputs/apk/release/app-release.apk`
+(Also automatically copied to `downloads/Marko-1.3.0.apk`)
+
+---
+
+## 🛡️ Android Play Protect & Default App Behavior
+
+### 1. Setting Marko as Default Markdown Viewer
+- **Intent Filters Configured**: Marko registers `android.intent.action.VIEW` for `text/markdown`, `text/x-markdown`, `text/plain`, and files with `.md` or `.markdown` extensions.
+- **How to Set Default**:
+  1. Open your phone's File Manager / Downloads.
+  2. Tap on any `.md` file.
+  3. Select **Marko** from the list of apps.
+  4. Tap **Always** (or **Set as default**).
+  5. The file will automatically open inside Marko's reader and editor.
+
+### 2. Google Play Protect Warning on Sideloaded APKs
+- **Why Google warns for APKs**: When installing APKs outside the Play Store (sideloading via WhatsApp, USB, or browser), Google Play Protect does not initially recognise the new developer key and displays a warning: *"Unsafe app blocked / Unknown developer"*.
+- **Fix Applied**: The app is now built with a dedicated release RSA-2048 keystore (`marko-release-key.jks`) using APK Signature Scheme v2 rather than standard debug keys.
+- **To install on your device**:
+  1. In the Play Protect prompt, tap **More details**.
+  2. Tap **Install anyway**.
+  3. *(Optional for testing)*: In Play Store > Profile > Play Protect > Settings (Gear icon), turn off "Scan apps with Play Protect" temporarily.
 
 ---
 

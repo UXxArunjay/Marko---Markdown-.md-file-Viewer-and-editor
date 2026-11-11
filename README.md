@@ -31,7 +31,7 @@ Get Marko for your favorite operating system:
 
 | Platform | Format | Release | Official High-Speed Download |
 | :--- | :--- | :---: | :--- |
-| **📱 Android Phone** | **APK** (`.apk`) | **v1.3.0** | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) • [Alternative APK Link](./downloads/Marko-1.2.0.apk?raw=true) |
+| **📱 Android Phone** | **APK** (`.apk`) | **v1.3.0** | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) • [Alternative APK Link](./downloads/Marko-1.3.0.apk?raw=true) |
 | **💻 Windows PC** | **Installer** (`.exe`) | **v1.3.0** | [⬇️ **Download Marko-Setup-1.3.0.exe (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) |
 | **💻 Windows Portable** | **No Install** (`.zip`) | **v1.3.0** | [⬇️ **Download from All Releases**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
 
@@ -197,16 +197,15 @@ Marko is pre-configured with **Capacitor 8** for native mobile deployment.
 
 ### Android:
 ```bash
-# Option A: One-step build & generate debug APK
+# Build signed release APK (Default)
 npm run build:android
 
-# Option B: Manual step-by-step
-npm run build
-npm run cap:sync
-npm run cap:open:android
+# Or specifically:
+npm run build:android:release
+npm run build:android:debug
 ```
-The output debug APK is generated at:
-`android/app/build/outputs/apk/debug/app-debug.apk` (and copied to `downloads/Marko-1.2.0.apk`).
+The output signed release APK is generated at:
+`android/app/build/outputs/apk/release/app-release.apk` (and copied to `downloads/Marko-1.3.0.apk`).
 
 ### iOS (macOS required):
 ```bash

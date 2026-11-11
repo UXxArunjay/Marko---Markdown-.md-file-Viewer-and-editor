@@ -11,13 +11,16 @@ Official download links for **Marko — Universal Markdown (.md) Viewer & Editor
 
 | File | Version | Channel | Official CDN Download | Alternative Direct Link |
 | :--- | :---: | :---: | :--- | :--- |
-| **Marko Android APK** | **v1.3.0** | Stable | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) | [⬇️ Raw APK Link](./Marko-1.2.0.apk?raw=true) |
+| **Marko Android APK** | **v1.3.0** | Stable | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) | [⬇️ Raw APK Link](./Marko-1.3.0.apk?raw=true) |
 
 ### How to Install on Android:
 1. Tap the download link above to download `Marko-1.3.0.apk` onto your Android phone.
 2. Tap the downloaded `.apk` file in your notifications or file manager.
-3. If prompted by Android, enable **Install unknown apps** for your browser / file manager.
-4. Tap **Install** and enjoy distraction-free Markdown reading with Zen Fullscreen mode & Claude AI!
+3. If prompted by Android / Google Play Protect:
+   * Allow **"Install unknown apps"** for your file manager/browser.
+   * On the Play Protect screen, tap **"More details"** and select **"Install anyway"**.
+4. Tap **Install**.
+5. **Set as Default Viewer**: Tap on any `.md` or `.markdown` file in your device's file manager, select **Marko**, and choose **"Always"**. Marko will now automatically open and render all your Markdown files!
 
 ---
 
