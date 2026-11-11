@@ -9,12 +9,12 @@ Official download links for **Marko — Universal Markdown (.md) Viewer & Editor
 
 ## 📱 Android Application (`.apk`)
 
-| File | Version | Channel | Official CDN Download | Alternative Direct Link |
-| :--- | :---: | :---: | :--- | :--- |
-| **Marko Android APK** | **v1.3.0** | Stable | [⬇️ **Download Marko-1.3.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) | [⬇️ Raw APK Link](./Marko-1.3.0.apk?raw=true) |
+| File | Version | Channel | Official CDN Download |
+| :--- | :---: | :---: | :--- |
+| **Marko Android APK** | **v1.4.0** | Stable | [⬇️ **Download Marko-1.4.0.apk (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) |
 
 ### How to Install on Android:
-1. Tap the download link above to download `Marko-1.3.0.apk` onto your Android phone.
+1. Tap the download link above to download `Marko-1.4.0.apk` onto your Android phone.
 2. Tap the downloaded `.apk` file in your notifications or file manager.
 3. If prompted by Android / Google Play Protect:
    * Allow **"Install unknown apps"** for your file manager/browser.
@@ -28,7 +28,7 @@ Official download links for **Marko — Universal Markdown (.md) Viewer & Editor
 
 | File | Version | Type | Official CDN Download |
 | :--- | :---: | :---: | :--- |
-| **Marko Windows Setup** | **v1.3.0** | NSIS Installer (.exe) | [⬇️ **Download Marko-Setup-1.3.0.exe (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) • [All Releases](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
+| **Marko Windows Setup** | **v1.4.0** | NSIS Installer (.exe) | [⬇️ **Download Marko-Setup-1.4.0.exe (Releases)**](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases/latest) • [All Releases](https://github.com/UXxArunjay/Marko---Markdown-.md-file-Viewer-and-editor/releases) |
 
 ### Features of the Windows Installer:
 * ✅ Full desktop integration with Desktop & Start Menu shortcuts.

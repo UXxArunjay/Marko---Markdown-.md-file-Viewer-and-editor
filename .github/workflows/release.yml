@@ -15,10 +15,9 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: Build & Publish Release
+  build-windows:
+    name: Build Windows Installer (.exe)
     runs-on: windows-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,7 +30,39 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Set up Java JDK 17 (for Android build)
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Package Windows Installer (.exe)
+        run: npx electron-builder --win nsis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: release/*.exe
+
+  build-android:
+    name: Build Android APK (.apk)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Set up Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
@@ -46,38 +77,57 @@ jobs:
       - name: Build Web Application
         run: npm run build
 
-      - name: Package Windows Installer (.exe)
-        run: npx electron-builder --win nsis
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Sync Capacitor Android
         run: npx cap sync android
 
       - name: Build Android Debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+
+  publish-release:
+    name: Publish Official GitHub Release
+    needs: [build-windows, build-android]
+    if: always() && (needs.build-windows.result == 'success' || needs.build-android.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows Installer
+        uses: actions/download-artifact@v4
+        if: needs.build-windows.result == 'success'
+        with:
+          name: windows-installer
+          path: release-artifacts
+
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        if: needs.build-android.result == 'success'
+        with:
+          name: android-apk
+          path: release-artifacts
 
       - name: Prepare Release Artifacts
-        shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path artifacts-out
-          
-          # Copy Windows Installer
-          $exe = Get-ChildItem -Path release -Filter "*.exe" | Select-Object -First 1
-          if ($exe) {
-            Copy-Item $exe.FullName -Destination "artifacts-out\$($exe.Name)"
-            Write-Host "Found Windows Installer: $($exe.Name)"
-          }
-
-          # Copy Android APK
-          $apk = Get-ChildItem -Path "android/app/build/outputs/apk/debug" -Filter "*.apk" | Select-Object -First 1
-          if ($apk) {
-            Copy-Item $apk.FullName -Destination "artifacts-out\$($apk.Name)"
-            Write-Host "Found Android APK: $($apk.Name)"
-          }
-
-          Get-ChildItem -Path artifacts-out
+          mkdir -p final-artifacts
+          for f in release-artifacts/*.exe; do
+            if [ -f "$f" ]; then
+              cp "$f" "final-artifacts/Marko-Setup-1.4.0.exe"
+              echo "Found Windows installer: $f"
+            fi
+          done
+          for f in release-artifacts/*.apk; do
+            if [ -f "$f" ]; then
+              cp "$f" "final-artifacts/Marko-1.4.0.apk"
+              echo "Found Android APK: $f"
+            fi
+          done
+          ls -la final-artifacts/
 
       - name: Publish Official GitHub Release
         uses: softprops/action-gh-release@v2
@@ -89,6 +139,6 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            artifacts-out/*
+            final-artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
