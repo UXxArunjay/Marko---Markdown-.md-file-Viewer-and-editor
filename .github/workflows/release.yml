@@ -75,11 +75,8 @@ jobs:
       - name: Build Web Application
         run: npm run build
 
-      - name: Make Gradle Wrapper Executable
-        run: chmod +x android/gradlew
-
-      - name: Sync Capacitor Android
-        run: npx cap sync android
+      - name: Copy Web Assets to Android
+        run: npx cap copy android
 
       - name: Build Android Debug APK
         working-directory: android
