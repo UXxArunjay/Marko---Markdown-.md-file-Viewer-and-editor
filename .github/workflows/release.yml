@@ -67,9 +67,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+          cache: 'gradle'
 
       - name: Install Node Dependencies
         run: npm ci
@@ -115,18 +113,9 @@ jobs:
       - name: Prepare Release Artifacts
         run: |
           mkdir -p final-artifacts
-          for f in release-artifacts/*.exe; do
-            if [ -f "$f" ]; then
-              cp "$f" "final-artifacts/Marko-Setup-1.4.0.exe"
-              echo "Found Windows installer: $f"
-            fi
-          done
-          for f in release-artifacts/*.apk; do
-            if [ -f "$f" ]; then
-              cp "$f" "final-artifacts/Marko-1.4.0.apk"
-              echo "Found Android APK: $f"
-            fi
-          done
+          find release-artifacts -type f -name "*.exe" -exec cp "{}" final-artifacts/Marko-Setup-1.4.0.exe \;
+          find release-artifacts -type f -name "*.apk" -exec cp "{}" final-artifacts/Marko-1.4.0.apk \;
+          echo "=== Prepared Release Artifacts ==="
           ls -la final-artifacts/
 
       - name: Publish Official GitHub Release
